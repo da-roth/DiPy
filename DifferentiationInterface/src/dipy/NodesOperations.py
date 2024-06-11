@@ -207,7 +207,7 @@ class SumNode(Node):
     
     def get_input_variables(self):
         variableStrings = [var for op in self.operands for var in op.get_input_variables()]
-        return self.Flatten_and_extract_unique([x for x in variableStrings if x])
+        return self.flatten_and_extract_unique([x for x in variableStrings if x])
 
 
     
@@ -223,8 +223,6 @@ class IfNode(Node):
         self.parents = [self.condition, self.true_value, self.false_value]
         self.payoff_bfs = None
 
-
-
     def __str__(self):
         return f"if({str(self.condition)}, {str(self.true_value)}, {str(self.false_value)})"
 
@@ -238,7 +236,7 @@ class IfNode(Node):
     
     def get_input_variables(self):
         variableStrings = [self.condition.get_input_variables(), self.true_value.get_input_variables(), self.false_value.get_input_variables()]
-        return self.Flatten_and_extract_unique([x for x in variableStrings if x])
+        return self.flatten_and_extract_unique([x for x in variableStrings if x])
 
 
 # Comparison node
@@ -276,7 +274,7 @@ class ComparisonNode(Node):
     
     def get_input_variables(self):
         variableStrings = [self.left.get_input_variables(), self.right.get_input_variables()]
-        return self.Flatten_and_extract_unique([x for x in variableStrings if x])
+        return self.flatten_and_extract_unique([x for x in variableStrings if x])
     
 # Logarithm function node
 class GradNode(UnitaryNode):

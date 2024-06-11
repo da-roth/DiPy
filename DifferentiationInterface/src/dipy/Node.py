@@ -7,9 +7,6 @@ import time
 
 class Node:
     
-    # Mapping dictionary to associate backend strings with classes
-    backend = 'numpy'
-
     ## Constructor, evaluate and string representation
     def __init__(self):
         self.parents = []
@@ -107,31 +104,13 @@ class Node:
         b = self.grad()
         return a + b
 
-    def DoPerformanceTest(self, diffDirection, warmup_iterations=5, test_iterations=100):
-        print('Starting performance test:')
-        # Warm-up phase
-        for _ in range(warmup_iterations):
-            start_time = time.time()
-            self.grad(diffDirection)
-            end_time = time.time()
-            warmup_duration = end_time - start_time
+    def run_performance_test(self, input_variables, warmup_iterations=5, test_iterations=100):
+        from .backends import BackendConfig
+        eval_class = BackendConfig.backend_result_classes[BackendConfig.backend]["result"]
+        instance_eval_class = eval_class(self)
 
-        # Test phase
-        total_time = 0.0
-        times = []
-        for _ in range(test_iterations):
-            start_time = time.time()
-            self.grad(diffDirection)
-            end_time = time.time()
-            execution_time = end_time - start_time
-            total_time += execution_time
-            times.append(execution_time)
+        instance_eval_class.performance_test(input_variables[0], input_variables, warmup_iterations, test_iterations)
 
-        mean_time = total_time / test_iterations
-        variance_time = sum((time - mean_time) ** 2 for time in times) / (test_iterations - 1)
-
-        print(f"Mean execution time: {mean_time:.6f} seconds")
-        print(f"Variance in execution time: {variance_time:.6f} seconds")
 
     ## Valuation and derivative logics.
     # Todo:
@@ -143,7 +122,13 @@ class Node:
         from .backends import BackendConfig
         eval_class = BackendConfig.backend_result_classes[BackendConfig.backend]["result"]
         instance_eval_class = eval_class(self)
-        return instance_eval_class.eval()
+        return instance_eval_class.eval()#, instance_eval_class
+    
+    def create_result_class(self):
+        from .backends import BackendConfig
+        eval_class = BackendConfig.backend_result_classes[BackendConfig.backend]["result"]
+        instance_eval_class = eval_class(self)
+        return instance_eval_class
         
     def grad(self, diffDirection):
         from .backends import BackendConfig
