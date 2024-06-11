@@ -14,6 +14,13 @@ This package provides a backend-agnostic interface for the differentiation of sc
 - First- and second-order derivatives (gradients, Jacobians, Hessians and more)
 - TBA
 
+## Compatibility
+
+- numpy (using finite differences)
+- JAX
+- PyTorch
+- TensorFlow
+
 ## Example
 
 
