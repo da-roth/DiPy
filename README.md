@@ -1,4 +1,4 @@
-# DiPy 
+# DiPy (Differentiation Interface for Python)
 
 An interface to various automatic (adjoint) differentiation (AAD) backends in Python
 
@@ -76,3 +76,5 @@ for backend in backend_array:
 ```
 
 ## General remarks
+
+- Inspired by [DifferentiationInterface for Julia](https://github.com/gdalle/DifferentiationInterface.jl?tab=readme-ov-file)
