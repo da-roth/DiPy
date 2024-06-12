@@ -12,7 +12,7 @@ This package provides a backend-agnostic interface for the differentiation of sc
 ## Features
 
 - First- and second-order derivatives (gradients, Jacobians, Hessians and more)
-- Testing and benchmarking utilities accessible to users with [DifferentiationInterfaceTest] (https://github.com/da-roth/DiPy/tree/main/DifferentiationInterfaceTest/)
+- Testing and benchmarking utilities accessible to users with [DifferentiationInterfaceTest](https://github.com/da-roth/DiPy/tree/main/DifferentiationInterfaceTest/)
 - TBA
 
 ## Compatibility
