@@ -110,13 +110,6 @@ class Node:
         instance_eval_class = eval_class(self)
 
         instance_eval_class.performance_test(input_variables[0], input_variables, warmup_iterations, test_iterations)
-
-
-    ## Valuation and derivative logics.
-    # Todo:
-    # - Node.backend is strange since it's from another class
-    # - finite differences into another class
-    # - more than just s0 derivative
     
     def eval(self):
         from .backends import BackendConfig
@@ -178,12 +171,14 @@ class Node:
 
 # Unary and binary node
 class UnitaryNode(Node):
+
     def get_inputs(self):
         return self.operand.get_inputs()
     def get_input_variables(self):
         return self.operand.get_input_variables()
 
 class BinaryNode(Node):
+
     def get_inputs(self):
         inputs = [self.left.get_inputs(), self.right.get_inputs()]
         return [x for x in inputs if x]
