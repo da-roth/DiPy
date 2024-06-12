@@ -33,7 +33,6 @@ import numpy as np
 
 x = 1.7
 a = np.sqrt(2)
-
 y = np.exp(x * a)
 
 #Backend      Result       
@@ -45,8 +44,7 @@ import dipy.dipy as di
 
 x_value = 1.7
 x= di.variable(x_value)
-a = np.sqrt(2)
-
+a = di.sqrt(2)
 y = di.exp(x * a)
 
 result = y.eval()
@@ -58,7 +56,6 @@ derivative = y.grad(x)
 
 ```python
 import dipy.dipy as di
-import numpy as np
 
 backend_array = ['numpy', 'torch', 'tensorflow', 'jax']
 
@@ -67,7 +64,7 @@ for backend in backend_array:
 
     x_value = 1.7
     x = di.variable(x_value)
-    a = np.sqrt(2)
+    a = di.sqrt(2)
     y = di.exp(x * a)
     
     result = y.eval()
