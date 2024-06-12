@@ -13,7 +13,10 @@ This package provides a backend-agnostic interface for the differentiation of sc
 
 - First- and second-order derivatives (gradients, Jacobians, Hessians and more)
 - Testing and benchmarking utilities accessible to users with [DifferentiationInterfaceTest](https://github.com/da-roth/DiPy/tree/main/DifferentiationInterfaceTest/)
-- TBA
+
+## General remarks
+
+- Inspired by [DifferentiationInterface for Julia](https://github.com/gdalle/DifferentiationInterface.jl?tab=readme-ov-file)
 
 ## Compatibility
 
@@ -75,7 +78,3 @@ for backend in backend_array:
 #tensorflow   11.069163    15.654160   
 #jax          11.069162    15.654160     
 ```
-
-## General remarks
-
-- Inspired by [DifferentiationInterface for Julia](https://github.com/gdalle/DifferentiationInterface.jl?tab=readme-ov-file)
