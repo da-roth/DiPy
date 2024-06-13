@@ -12,7 +12,7 @@ Diffipy Test provides convenient utilities for evaluating the performance of aut
 
 ## Example
 
-Here's an example ((Colab version[https://github.com/da-roth/DiffiPy/blob/main/DifferentiationInterfaceTest/examples-colab/introduction_colab.ipynb]) demonstrating the usage of Diffipy Test for performance testing across different AD backends:
+Here's an example ([Colab version](https://github.com/da-roth/DiffiPy/blob/main/DifferentiationInterfaceTest/examples-colab/introduction_colab.ipynb)) demonstrating the usage of Diffipy Test for performance testing across different AD backends:
 
 
 ```python
