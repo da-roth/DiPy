@@ -47,7 +47,7 @@ print(y.eval())
 ### Option 2: Import 'diffipy' as 'np'
 Refactor by importing diffipy as 'np' to keep the code almost identical:
 ```python
-import diffipy as dp
+import diffipy as np
 
 x = 1.7
 a = np.sqrt(2)
