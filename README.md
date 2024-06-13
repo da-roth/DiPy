@@ -7,14 +7,14 @@ An interface to various automatic (adjoint) differentiation (AAD) backends in Py
 This package provides a backend-agnostic interface for the differentiation of scientific computations. The main goal is to:
 
 - Enable automatic (adjoint) differentiation for all sorts of backends through minimal code refactoring. This allows for AAD in all kinds of codes by supporting not only functions of the general form `f(x)=y` but also complete scripts.
-- Simplify the integration of automatic differentiation into existing codebases by maintaining a familiar syntax and interface, akin to NumPy.
+- Simplify the integration of automatic differentiation into existing code by maintaining a familiar syntax and interface, akin to NumPy.
 
 ## Features
 
+- **Graph Recording Tool**: Provides a graph recording tool using a syntax identical to NumPy, enabling straightforward transition and enhanced computational graph analysis.
 - **Minimal Refactoring Required**: Transitioning from NumPy to DiPy involves simple changes, making it easy to integrate into existing projects.
 - **Backend-Agnostic**: Supports various AAD backends, providing flexibility and extensibility.
 - **Familiar Syntax**: Maintains a syntax and interface similar to NumPy, allowing users to leverage their existing knowledge.
-- **Graph Recording Tool**: Provides a graph recording tool using a syntax identical to NumPy, enabling straightforward transition and enhanced computational graph analysis.
 
 ## Example
 
