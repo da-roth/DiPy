@@ -58,7 +58,9 @@ print(y)
 print(y.eval())
 #11.069162135812496
 ```
-Note: The addition of y.eval() is necessary to obtain the float result, otherwise, it will display the computational graph.
+Notes: 
+- The addition of y.eval() is necessary to obtain the float result, otherwise, it will display the computational graph.
+- [Colab example](https://github.com/da-roth/DiffiPy/blob/main/DifferentiationInterface/examples-colab/introduction_colab.ipynb) for the above and the following example.
 
 ## Compatibility
 
@@ -95,5 +97,11 @@ for backend in backend_array:
 
 - Inspired by [DifferentiationInterface for Julia](https://github.com/gdalle/DifferentiationInterface.jl?tab=readme-ov-file)
 
+## Contributing
 
+I welcome contributions and suggestions to improve the framework. Please feel free to open an issue or submit a pull request with your proposed changes.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
