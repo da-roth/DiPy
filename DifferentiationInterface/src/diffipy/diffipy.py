@@ -5,7 +5,7 @@ from .NodesPytorch import *
 from .NodesNumpy import *
 from .backends import *
 
-class dipy:
+class diffipy:
 
     @staticmethod
     def setBackend(backend):
