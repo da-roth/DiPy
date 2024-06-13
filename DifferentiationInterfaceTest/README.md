@@ -1,6 +1,6 @@
-# DiPy 
+# Diffipy Test
 
-Testing and benchmarking utilities for automatic differentiation (AD) in Python, based on DiPy (DifferentiationInterface for Python).
+Testing and benchmarking utilities for automatic differentiation (AD) in Python, based on DiffiPy (Differentiation interface for Python).
 
 ## Goal
 

@@ -8,5 +8,5 @@ from .NodesTensorflow import *
 from .NodesJax import *
 
 from .backends import *
-from .diffipy import diffipy
+from .diffipy import *
 
