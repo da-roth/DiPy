@@ -13,8 +13,8 @@ This package provides a backend-agnostic interface for the differentiation of sc
 
 - **Graph Recording Tool**: Provides a graph recording tool using a syntax identical to numpy, enabling straightforward transition and enhanced computational graph analysis.
 - **Minimal Refactoring Required**: Transitioning from numpy to diffipy involves simple changes, making it easy to integrate into existing projects.
-- **Backend-Agnostic**: Supports various AAD backends, providing flexibility and extensibility.
-- **Familiar Syntax**: Maintains a syntax and interface similar to numpy, allowing users to leverage their existing knowledge.
+- **Backend-Agnostic**: Supports various AAD backends, providing flexibility and extensibility. S
+- **Performance Testing**: Testing and benchmarking utilities accessible to users with [DiffererntiationInterfaceTest](https://github.com/da-roth/DiffiPy/tree/main/DifferentiationInterfaceTest)
 
 ## Example
 
