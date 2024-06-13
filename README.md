@@ -20,7 +20,7 @@ This package provides a backend-agnostic interface for the differentiation of sc
 
 Refactoring your existing numpy code to use Diffipy is straightforward. Here are two simple options to demonstrate this:
 
-# Original Code Using numpy
+### Original Code Using numpy
 ```python
 import numpy as np
 
@@ -31,7 +31,7 @@ y = np.exp(x * a)
 print(y)
 #11.069162135812496
 ```
-# Option 1: Direct Replacement of Prefixes
+### Option 1: Direct Replacement of Prefixes
 Refactor by replacing the np. prefixes with dp. prefixes:
 ```python
 import diffipy as dp
@@ -44,7 +44,7 @@ print(y)
 print(y.eval())
 #11.069162135812496
 ```
-# Option 2: Import 'diffipy' as 'np'
+### Option 2: Import 'diffipy' as 'np'
 Refactor by importing diffipy as 'np' to keep the code almost identical:
 ```python
 import diffipy as dp
@@ -69,7 +69,7 @@ Notes:
 - PyTorch
 - TensorFlow
 
-# Example: 
+## Example Iterating through the compatible backends: 
 
 ```python
 import diffipy as dp
