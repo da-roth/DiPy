@@ -1,109 +1,82 @@
-from .Node import *
-from .NodesVariables import *
-from .NodesOperations import *
+# Import the nodes from which the following classes will inherit
+from ...Node import *
+from ...NodesVariables import *
+from ...NodesOperations import *
+from ...NodesDifferentiation import *
 
-# Numerical and statistic computations
+# Import backend specific packages
 import torch
 
-# Subclass for PyTorch
+###
+### PyTorch specific nodes.
+###
+
 class VariableNodeTorch(VariableNode):
     def __init__(self, value, identifier=None):
         super().__init__(value, identifier)
-        self.torch_tensor = torch.tensor(self.value, requires_grad=True)
+        self.value = torch.tensor(self.value, requires_grad=True)
         self.require_grad = True
-        self.value = self.torch_tensor
+        #self.value = self.value
 
     def Run(self):
-        return self.torch_tensor
-    
+        return self.value
 
-# Subclass for PyTorch
 class RandomVariableNodeTorch(RandomVariableNode):
     def NewSample(self, sampleSize = 1):
         self.SampleSize = sampleSize
         z_torch = torch.normal(mean=0, std=1, size=(1,sampleSize))
         self.value = 0.5 * (1 + torch.erf(z_torch / torch.sqrt(torch.tensor(2.0))))
 
-# Subclass for PyTorch
 class RandomVariableNodeTorchNormal(RandomVariableNode):
     def NewSample(self, sampleSize = 1):
         self.SampleSize = sampleSize
         self.value = torch.normal(mean=0, std=1, size=(1,sampleSize))
 
-
-
-# Subclass for PyTorch
 class ConstantNodeTorch(ConstantNode):
     def Run(self):
         return torch.tensor(self.value)
-    
     def __str__(self):
         return f"constant({str(self.value)})"
 
-    
-# Subclass for PyTorch
 class SinNodeTorch(SinNode):
     def Run(self):
         return torch.sin(self.operand.Run())
     
-# Subclass for PyTorch
 class CosNodeTorch(CosNode):
     def Run(self):
         return torch.cos(self.operand.Run())
 
-# Subclass for PyTorch
 class ExpNodeTorch(ExpNode):
     def Run(self):
         return torch.exp(self.operand.Run())
 
-
-
-# Subclass for PyTorch
 class LogNodeTorch(LogNode):
     def Run(self):
         return torch.log(self.operand.Run())
     
-
-# Subclass for PyTorch
 class SqrtNodeTorch(SqrtNode):
     def Run(self):
         return torch.sqrt(self.operand.Run())
 
-
-
-# Subclass for PyTorch
 class PowNodeTorch(PowNode):
     def Run(self):
         return torch.pow(self.left.Run(), self.right.Run())
 
-
-
-# Subclass for PyTorch
 class CdfNodeTorch(CdfNode):
     def Run(self):
         return 0.5 * (torch.erf(self.operand.Run() / torch.sqrt(torch.tensor(2.0))) + 1.0 )
 
-
-
-# Subclass for PyTorch
 class ErfNodeTorch(ErfNode):
     def Run(self):
         return torch.erf(self.operand.Run())
     
-
-# Subclass for PyTorch
 class ErfinvNodeTorch(ErfinvNode):
     def Run(self):
         return torch.erfinv(self.operand.Run())
     
-
-# Subclass for PyTorch
 class MaxNodeTorch(MaxNode):
     def Run(self):
         return torch.maximum(self.left.Run(), self.right.Run())
-    
-
-
 
 class SumNodeVectorizedTorch(Node):
     def __init__(self, operands):
@@ -117,22 +90,12 @@ class SumNodeVectorizedTorch(Node):
     def Run(self):
         return torch.sum(self.operands.Run())
     
-    # We use sum of tensors only, hence here we don't have to iterate through an array.
     def get_inputs(self):
         return self.operands.get_inputs()
+    def get_inputs_with_diff(self):
+        return self.operands.get_inputs_with_diff()
     def get_input_variables(self):
         return self.operands.get_input_variables()
-
-    # def get_inputs(self):
-    #     inputs = [var for op in self.operands for var in op.get_inputs()]
-    #     return self.flatten_and_extract_unique([x for x in inputs if x])
-    
-    # def get_input_variables(self):
-    #     print(self.operands)
-    #     variableStrings = [var for op in self.operands for var in op.get_input_variables()]
-    #     return self.flatten_and_extract_unique([x for x in variableStrings if x])
-
-
 
 class IfNodeTorch(IfNode):
     def __init__(self, condition, true_value, false_value):
@@ -144,23 +107,40 @@ class IfNodeTorch(IfNode):
       false_value = self.false_value.Run()
       return torch.where(condition_value, true_value, false_value)
     
-
-# Subclass for PyTorch
-class GradNodeTorch(GradNode):
+class DifferentiationNodeTorch(DifferentiationNode):
     def __init__(self, operand, diffDirection):
         super().__init__(operand, diffDirection)
 
-    def grad(self):
-        # Reset derivative graph
-        self.diffDirection.torch_tensor.grad = None
-        forwardevaluation = self.Run()
+    def backend_specific_grad(self):
+        # Handle the case where self.diffDirection is a list
+        if isinstance(self.diffDirection, list):
+            derivatives = []
+            for direction in self.diffDirection:
+                # Reset derivative graph for each tensor
+                if direction.value.grad is not None:
+                    direction.value.grad.zero_()
+                forward_evaluation = self.Run()
 
-        # Backward
-        forwardevaluation.backward()
+                # Backward pass
+                forward_evaluation.backward()
 
-        # Return S0 derivative
-        derivative = self.diffDirection.torch_tensor.grad.item()
-        return derivative
+                # Get the gradient
+                derivative = direction.value.grad.item()
+                derivatives.append(derivative)
+            return derivatives
+        else:
+            # Handle the case where self.diffDirection is a single object
+            # Reset derivative graph
+            if self.diffDirection.value.grad is not None:
+                self.diffDirection.value.grad.zero_()
+            forward_evaluation = self.Run()
+
+            # Backward pass
+            forward_evaluation.backward()
+
+            # Get the gradient
+            derivative = self.diffDirection.value.grad.item()
+            return derivative
     
 class ResultNodeTorch(ResultNode):
     def __init__(self, operationNode):
@@ -169,92 +149,27 @@ class ResultNodeTorch(ResultNode):
     def eval(self):
         return self.operationNode.Run().item()
         
-    def performance_test(self, diffDirection, input_variables, warmup_iterations, test_iterations):
-        total_time = 0.0
-        results_standard = []
-        deltas_standard = []
-        times = []
+    def eval_and_grad_of_function(sef, myfunc, input_dict, diff_dict):
+        
+        result = myfunc(**input_dict)
 
-        for _ in range(warmup_iterations):
-            result_standard = self.operationNode.eval()
-            delta_standard = self.operationNode.grad(diffDirection)
+        for key in diff_dict: #Reset all gradients first
+            diff_dict[key].grad = None
 
-        for _ in range(test_iterations):
-            tic = time.time()
+        result.backward()
 
-            #z.value = pre_computed_random_variables
-            result_standard = self.operationNode.eval()
-            delta_standard = self.operationNode.grad(diffDirection)
+        gradient = []
+        for key in diff_dict:
+            gradient_entry = diff_dict[key].grad
+            gradient.append( gradient_entry)
+        return result, gradient
 
-            toc = time.time()
-            spent = toc - tic
-            times.append(spent)
-            total_time += spent
-            results_standard.append(result_standard)
-            deltas_standard.append(delta_standard)
-
-        # Compute runtimes
-        mean_time_standard =  total_time / test_iterations
-        variance_time_standard =  sum((time - mean_time_standard) ** 2 for time in times) / (test_iterations - 1)    
-
-
-        values = [var.value for var in input_variables]
-        args_dict = {var.identifier: var.value for var in input_variables}
-
-        ###
-        ### Test performance of optimized executable
-        ###
-
-        myfunc = self.operationNode.get_optimized_executable()
-
-        #di.seed(seed)
-        time_total_optimized = 0
-        times_optimized = []
-        results_optimized = []
-        deltas_optimized = []
-
-        #pre_computed_random_variables = z.value #torch.normal(mean=0, std=1, size=(1, N))
-
-        for _ in range(warmup_iterations):
-            result_optimized = myfunc(**args_dict)#s0=s0.value, K=K.value, r=r.value, sigma=sigma.value, dt = dt.value, z=pre_computed_random_variables)
-            diffDirection.torch_tensor.grad = None
-            result_optimized.backward()
-            derivative_optimized = diffDirection.torch_tensor.grad.item()
-
-        for _ in range(test_iterations):
-            tic = time.time()
-
-            result_optimized = myfunc(**args_dict)#s0=s0.value, K=K.value, r=r.value, sigma=sigma.value, dt = dt.value, z=pre_computed_random_variables)
-            diffDirection.torch_tensor.grad = None
-            result_optimized.backward()
-            derivative_optimized = diffDirection.torch_tensor.grad.item()
-
-            toc = time.time()
-            spent = toc - tic
-            times_optimized.append(spent)
-            time_total_optimized += spent
-
-            results_optimized.append(result_optimized.item())
-            deltas_optimized.append(derivative_optimized)
-            
-        # Compute runtimes
-        # mean_time_standard =  total_time / test_iterations
-        # variance_time_standard =  sum((time - mean_time_standard) ** 2 for time in times) / (test_iterations - 1)    
-        mean_time_optimized = time_total_optimized / test_iterations
-        variance_time_optimized = sum((time - mean_time_optimized) ** 2 for time in times_optimized) / (test_iterations - 1)
-
-        print("{:<20} {:<12.6f} {:<20.6f} {:<15.6f} {:<15.6f}".format("torch", sum(results_standard) / test_iterations, sum(deltas_standard) / test_iterations, mean_time_standard, variance_time_standard))
-        print("{:<20} {:<12.6f} {:<20.6f} {:<15.6f} {:<15.6f}".format("torch_optimized", sum(results_optimized) / test_iterations, sum(deltas_optimized) / test_iterations, mean_time_optimized, variance_time_optimized))
 
     def create_optimized_executable(self):
             def create_function_from_expression(expression_string, expression_inputs, backend):
                 # Generate the function definition as a string
                 inputs = ", ".join(expression_inputs)
                 function_code = f"def myfunc({inputs}):\n    return {expression_string}\n"
-                
-                # Print the generated function code
-                # print("Generated Function Code:")
-                # print(function_code)
 
                 # Compile the function code
                 compiled_code = compile(function_code, "<string>", "exec")

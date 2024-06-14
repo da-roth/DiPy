@@ -1,8 +1,16 @@
-from .Node import *
-from .NodesVariables import *
-from .NodesOperations import *
+# Import the nodes from which the following classes will inherit
+from ...Node import *
+from ...NodesVariables import *
+from ...NodesOperations import *
+from ...NodesDifferentiation import *
 
+# Import backend specific packages
 import tensorflow as tf
+import numpy as np
+
+###
+### TensorFlow specific nodes.
+###
 
 class VariableNodeTF(VariableNode):
     def __init__(self, value, identifier=None):
@@ -74,16 +82,14 @@ class SumNodeVectorizedTF(Node):
         super().__init__()
         self.operand = self.ensure_node(operand)
         self.parents = [self.operand]
-
     def __str__(self):
         return f"sumVectorized({str(self.operand)})"
-
     def Run(self):
         return tf.reduce_sum(self.operand.Run())
-        
-    # We use sum of tensors only, hence here we don't have to iterate through an array.
     def get_inputs(self):
         return self.operand.get_inputs()
+    def get_inputs_with_diff(self):
+        return self.operand.get_inputs_with_diff()
     def get_input_variables(self):
         return self.operand.get_input_variables()
 
@@ -97,14 +103,29 @@ class IfNodeTF(IfNode):
         false_value = self.false_value.Run()
         return tf.where(condition_value, true_value, false_value)
 
-class GradNodeTF(GradNode):
+class DifferentiationNodeTF(DifferentiationNode):
     def __init__(self, operand, diffDirection):
         super().__init__(operand, diffDirection)
 
-    def grad(self):
-        with tf.GradientTape() as tape:
-            forward_evaluation = self.Run()
-        return tape.gradient(forward_evaluation, self.diffDirection.value).numpy()
+    def backend_specific_grad(self):
+        # Handle the case where self.diffDirection is a list
+        if isinstance(self.diffDirection, list):
+            gradients = []
+            for direction in self.diffDirection:
+                with tf.GradientTape() as tape:
+                    forward_evaluation = self.Run()
+
+                gradient = tape.gradient(forward_evaluation, direction.value).numpy()
+                gradients.append(gradient)
+            
+            return gradients
+        else:
+            # Handle the case where self.diffDirection is a single object
+            with tf.GradientTape() as tape:
+                forward_evaluation = self.Run()
+
+            gradient = tape.gradient(forward_evaluation, self.diffDirection.value).numpy()
+            return gradient
 
 class ResultNodeTF(ResultNode):
     def __init__(self, operationNode):
@@ -113,84 +134,11 @@ class ResultNodeTF(ResultNode):
     def eval(self):
         return self.operationNode.Run().numpy().item()
     
-    def performance_test(self, diffDirection, input_variables, warmup_iterations, test_iterations):
-        total_time = 0.0
-        results_standard = []
-        deltas_standard = []
-        times = []
-
-        for _ in range(warmup_iterations):
-            result_standard = self.operationNode.eval()
-            delta_standard = self.operationNode.grad(diffDirection)
-
-        #print(delta_standard)
-        for _ in range(test_iterations):
-            tic = time.time()
-
-            #z.value = pre_computed_random_variables
-            result_standard = self.operationNode.eval()
-            delta_standard = self.operationNode.grad(diffDirection)
-
-            toc = time.time()
-            spent = toc - tic
-            times.append(spent)
-            total_time += spent
-            results_standard.append(result_standard)
-            deltas_standard.append(delta_standard)
-
-        # Compute runtimes
-        mean_time_standard =  total_time / test_iterations
-        variance_time_standard =  sum((time - mean_time_standard) ** 2 for time in times) / (test_iterations - 1)    
-
-
-        values = [var.value for var in input_variables]
-        args_dict = {var.identifier: var.value for var in input_variables}
-
-        ###
-        ### Test performance of optimized executable
-        ###
-
-        myfunc = self.operationNode.get_optimized_executable()
-
-        #di.seed(seed)
-        time_total_optimized = 0
-        times_optimized = []
-        results_optimized = []
-        deltas_optimized = []
-
-        #pre_computed_random_variables = z.value #tf.normal(mean=0, std=1, size=(1, N))
-
-        for _ in range(warmup_iterations):
-            with tf.GradientTape() as tape:
-                result_optimized = myfunc(**args_dict)#s0=s0.value, K=K.value, r=r.value, sigma=sigma.value, dt = dt.value, z=pre_computed_random_variables)
-            derivative_optimized = tape.gradient(result_optimized, diffDirection.value)
-            # diffDirection.tensorflow_tensor.grad = None
-            # result_optimized.backward()
-            # derivative_optimized = diffDirection.tensorflow_tensor.grad.item()
-
-        for _ in range(test_iterations):
-            tic = time.time()
-
-            with tf.GradientTape() as tape:
-                result_optimized = myfunc(**args_dict)#s0=s0.value, K=K.value, r=r.value, sigma=sigma.value, dt = dt.value, z=pre_computed_random_variables)
-            derivative_optimized = tape.gradient(result_optimized, diffDirection.value)
-            
-            toc = time.time()
-            spent = toc - tic
-            times_optimized.append(spent)
-            time_total_optimized += spent
-
-            results_optimized.append(np.sum(result_optimized.numpy()))
-            deltas_optimized.append(derivative_optimized.numpy())
-            
-        # Compute runtimes
-        # mean_time_standard =  total_time / test_iterations
-        # variance_time_standard =  sum((time - mean_time_standard) ** 2 for time in times) / (test_iterations - 1)    
-        mean_time_optimized = time_total_optimized / test_iterations
-        variance_time_optimized = sum((time - mean_time_optimized) ** 2 for time in times_optimized) / (test_iterations - 1)
-
-        print("{:<20} {:<12.6f} {:<20.6f} {:<15.6f} {:<15.6f}".format("tensorflow", sum(results_standard) / test_iterations, sum(deltas_standard) / test_iterations, mean_time_standard, variance_time_standard))
-        print("{:<20} {:<12.6f} {:<20.6f} {:<15.6f} {:<15.6f}".format("tensorflow_optimized", sum(results_optimized) / test_iterations, sum(deltas_optimized) / test_iterations, mean_time_optimized, variance_time_optimized))
+    def eval_and_grad_of_function(sef, myfunc, input_dict, diff_dict):
+        with tf.GradientTape() as tape:
+            result = myfunc(**input_dict)
+        gradients = tape.gradient(result, [diff_dict[key] for key in diff_dict])
+        return result, gradients
 
     def create_optimized_executable(self):
             def create_function_from_expression(expression_string, expression_inputs, backend):

@@ -1,7 +1,10 @@
 from .Node import *
 
 
-# Addition node
+###
+### Nodes that represent mathematical operations inheriting from BinaryNode and UnaryNode
+###
+
 class AddNode(BinaryNode):
     def __init__(self, left, right):
         super().__init__()
@@ -15,7 +18,6 @@ class AddNode(BinaryNode):
     def __str__(self):
         return f"({str(self.left)} + {str(self.right)})"
 
-# Subtraction node
 class SubNode(BinaryNode):
     def __init__(self, left, right):
         super().__init__()
@@ -29,7 +31,6 @@ class SubNode(BinaryNode):
     def __str__(self):
         return f"({str(self.left)} - {str(self.right)})"
 
-# Multiplication node
 class MulNode(BinaryNode):
     def __init__(self, left, right):
         super().__init__()
@@ -43,7 +44,6 @@ class MulNode(BinaryNode):
     def __str__(self):
         return f"({str(self.left)} * {str(self.right)})"
 
-# Division node
 class DivNode(BinaryNode):
     def __init__(self, left, right):
         super().__init__()
@@ -57,7 +57,6 @@ class DivNode(BinaryNode):
     def __str__(self):
         return f"({str(self.left)} / {str(self.right)})"
 
-# Negation node
 class NegNode(UnitaryNode):
     def __init__(self, operand):
         super().__init__()
@@ -70,7 +69,6 @@ class NegNode(UnitaryNode):
     def __str__(self):
         return f"(-{str(self.operand)})"
 
-# Exponential function node
 class ExpNode(UnitaryNode):
     def __init__(self, operand):
         super().__init__()
@@ -80,7 +78,6 @@ class ExpNode(UnitaryNode):
     def __str__(self):
         return f"exp({str(self.operand)})"
 
-# Sin function node
 class SinNode(UnitaryNode):
     def __init__(self, operand):
         super().__init__()
@@ -90,7 +87,6 @@ class SinNode(UnitaryNode):
     def __str__(self):
         return f"sin({str(self.operand)})"
     
-# Cos function node
 class CosNode(UnitaryNode):
     def __init__(self, operand):
         super().__init__()
@@ -100,8 +96,6 @@ class CosNode(UnitaryNode):
     def __str__(self):
         return f"cos({str(self.operand)})"
 
-
-# Logarithm function node
 class LogNode(UnitaryNode):
     def __init__(self, operand):
         super().__init__()
@@ -111,11 +105,6 @@ class LogNode(UnitaryNode):
     def __str__(self):
         return f"log({str(self.operand)})"
 
-
-
-
-
-# Square root function node
 class SqrtNode(UnitaryNode):
     def __init__(self, operand):
         super().__init__()
@@ -125,10 +114,6 @@ class SqrtNode(UnitaryNode):
     def __str__(self):
         return f"sqrt({str(self.operand)})"
 
-
-
-
-# Power function node
 class PowNode(BinaryNode):
     def __init__(self, left, right): # left = base, right = exponent
         super().__init__()
@@ -139,10 +124,6 @@ class PowNode(BinaryNode):
     def __str__(self):
         return f"({str(self.left)} ** {str(self.right)})"
 
-
-
-
-# Standard normal cdf
 class CdfNode(UnitaryNode):
     def __init__(self, operand):
         super().__init__()
@@ -151,9 +132,7 @@ class CdfNode(UnitaryNode):
 
     def __str__(self):
         return f"cdf({str(self.operand)})"
-
-
-# Error function node
+    
 class ErfNode(UnitaryNode):
     def __init__(self, operand):
         super().__init__()
@@ -163,9 +142,6 @@ class ErfNode(UnitaryNode):
     def __str__(self):
         return f"erf({str(self.operand)})"
 
-
-
-# Inverse error function node
 class ErfinvNode(UnitaryNode):
     def __init__(self, operand):
         super().__init__()
@@ -174,9 +150,7 @@ class ErfinvNode(UnitaryNode):
 
     def __str__(self):
         return f"erfinv({str(self.operand)})"
-
-
-# Maximum node
+    
 class MaxNode(BinaryNode):
     def __init__(self, left, right):
         super().__init__()
@@ -186,6 +160,10 @@ class MaxNode(BinaryNode):
 
     def __str__(self):
         return f"max({str(self.left)}, {str(self.right)})"
+    
+###
+### Nodes that represent mathematical operation (but more general than unariy or binary inputs)
+###
 
 # Summation node
 class SumNode(Node):
@@ -203,15 +181,15 @@ class SumNode(Node):
 
     def get_inputs(self):
         inputs = [var for op in self.operands for var in op.get_inputs()]
-        return self.flatten_and_extract_unique([x for x in inputs if x])
+        return self.flatten_list([x for x in inputs if x])
+    
+    def get_inputs_with_diff(self):
+        inputs = [var for op in self.operands for var in op.get_inputs_with_diff()]
+        return self.flatten_list([x for x in inputs if x])
     
     def get_input_variables(self):
         variableStrings = [var for op in self.operands for var in op.get_input_variables()]
-        return self.flatten_and_extract_unique([x for x in variableStrings if x])
-
-
-    
-
+        return self.flatten_and_extract_unique_strings([x for x in variableStrings if x])
 
 # Conditional (if) node
 class IfNode(Node):
@@ -231,12 +209,15 @@ class IfNode(Node):
 
     def get_inputs(self):
         inputs = [self.condition.get_inputs(), self.true_value.get_inputs(), self.false_value.get_inputs()]
-        return self.flatten_and_extract_unique([x for x in inputs if x])
+        return self.flatten_list([x for x in inputs if x])
     
+    def get_inputs_with_diff(self):
+        inputs = [self.condition.get_inputs_with_diff(), self.true_value.get_inputs_with_diff(), self.false_value.get_inputs_with_diff()]
+        return self.flatten_list([x for x in inputs if x])
     
     def get_input_variables(self):
         variableStrings = [self.condition.get_input_variables(), self.true_value.get_input_variables(), self.false_value.get_input_variables()]
-        return self.flatten_and_extract_unique([x for x in variableStrings if x])
+        return self.flatten_and_extract_unique_strings([x for x in variableStrings if x])
 
 
 # Comparison node
@@ -269,25 +250,16 @@ class ComparisonNode(Node):
 
     def get_inputs(self):
         inputs = [self.left.get_inputs(), self.right.get_inputs()]
-        return self.flatten_and_extract_unique([x for x in inputs if x])
+        return self.flatten_list([x for x in inputs if x])
     
+    def get_inputs_with_diff(self):
+        inputs = [self.left.get_inputs_with_diff(), self.right.get_inputs_with_diff()]
+        return self.flatten_list([x for x in inputs if x])
     
     def get_input_variables(self):
         variableStrings = [self.left.get_input_variables(), self.right.get_input_variables()]
-        return self.flatten_and_extract_unique([x for x in variableStrings if x])
+        return self.flatten_and_extract_unique_strings([x for x in variableStrings if x])
     
-# Logarithm function node
-class GradNode(UnitaryNode):
-    def __init__(self, operand, diffDirection):
-        super().__init__()
-        self.operand = self.ensure_node(operand)
-        self.parents = [self.operand]
-        self.diffDirection = diffDirection
 
-    def Run(self):
-        return self.operand.Run()
-
-    def __str__(self):
-        return f"grad({str(self.operand)})"
 
 

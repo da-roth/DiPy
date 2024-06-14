@@ -1,16 +1,12 @@
 from .Node import *
 
-# Numerical and statistic computations
-import numpy as np
-import torch
-import scipy
-import scipy.stats
-import scipy.special
+###
+### Nodes that handle different sort of variables/inputs which are distinguished by:
+### - variable: if not specified other, the backend will allow differentiation w.r.t. this variable
+### - random variable: can be used as input of the executable to pre-compute random samples and use them as an input. No differentiation.
+### - constant: Similar as variable, but no differentiation in this direction.
+###
 
-# For performance testing:
-import time
-
-# Variable node
 class VariableNode(UnitaryNode):
     _count = 0  # Start count from 1
 
@@ -33,6 +29,9 @@ class VariableNode(UnitaryNode):
         return f"{self.identifier}"
 
     def get_inputs(self):
+        return self
+    
+    def get_inputs_with_diff(self):
         return self
     
     def get_input_variables(self):
@@ -63,6 +62,9 @@ class RandomVariableNode(UnitaryNode):
     def get_inputs(self):
         return self
     
+    def get_inputs_with_diff(self):
+        return None
+    
     def get_input_variables(self):
         return str(self)
 
@@ -80,7 +82,10 @@ class ConstantNode(UnitaryNode):
         return str(self.value)
 
     def get_inputs(self):
-      return None
+        return None
+    
+    def get_inputs_with_diff(self):
+        return None
     
     def get_input_variables(self):
-      return ''
+        return ''
