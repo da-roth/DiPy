@@ -42,7 +42,6 @@ backend_result_classes = {
 backend_graph_differentiation_bool = True
 
 backend_function_mappings = {
-    "torch" : {
             "constant" : "torch.tensor",
             "exp": "torch.exp",
             "sin": "torch.sin",
@@ -57,5 +56,5 @@ backend_function_mappings = {
             "sumVectorized": "torch.sum",
             "seed": "torch.seed",
             "if": "torch.where"
-        }
     }
+    

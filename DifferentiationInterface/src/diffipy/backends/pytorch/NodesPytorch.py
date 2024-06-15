@@ -186,24 +186,8 @@ class ResultNodeTorch(ResultNode):
 
             expression = str(self.operationNode)
 
-                # Replace function names in the expression string
-            function_mappings = {
-                "constant" : "torch.tensor",
-                "exp": "torch.exp",
-                "sin": "torch.sin",
-                "cos": "torch.cos",
-                "pow": "torch.pow",
-                "log": "torch.log",
-                "sqrt": "torch.sqrt",
-                "cdf": "torch.cdf",
-                "erf": "torch.erf",
-                "erfinv": "torch.erfinv",
-                "max": "torch.max",
-                "sumVectorized": "torch.sum",
-                "seed": "torch.seed",
-                "if": "torch.where"
-            }
-            
+            function_mappings = self.get_function_mappings()
+
             for key, value in function_mappings.items():
                 expression = expression.replace(key, value)
 

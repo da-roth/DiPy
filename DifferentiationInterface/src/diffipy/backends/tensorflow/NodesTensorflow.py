@@ -165,23 +165,7 @@ class ResultNodeTF(ResultNode):
 
             expression = str(self.operationNode)
 
-                # Replace function names in the expression string
-            function_mappings = {
-                #"constant" : "tf.Variable",
-                "exp": "tf.exp",
-                "sin": "tf.sin",
-                "cos": "tf.cos",
-                "pow": "tf.pow",
-                "log": "tf.log",
-                "sqrt": "tf.sqrt",
-                "cdf": "tf.cdf",
-                "erf": "tf.erf",
-                "erfinv": "tf.erfinv",
-                "max": "tf.max",
-                "sumVectorized": "tf.math.reduce_sum",
-                "seed": "tf.seed",
-                "if": "tf.where"
-            }
+            function_mappings = self.get_function_mappings()
 
             import re
             

@@ -25,10 +25,10 @@ class ResultNode(Node):
     def eval_and_grad_of_function(sef, myfunc, args_dict):
         raise NotImplementedError("Must be implemented in ResultNode of backend")
     
-    # def get_function_mappings(self)
-    #     from .backend_config import BackendConfig
-    #     BackendConfig = BackendConfig()
-    #     function_mappings = BackendConfig.backend_function_mappings[BackendConfig.backend]["function_mappings]
+    def get_function_mappings(self):
+        from .backend_config import BackendConfig
+        BackendConfig = BackendConfig()
+        return BackendConfig.backend_function_mappings
 
     def run_backend_specific_performance_tests(self, input_variables, diff_variables, warmup_iterations, test_iterations):
         

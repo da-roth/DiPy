@@ -40,3 +40,20 @@ backend_result_classes = {
 }
 
 backend_graph_differentiation_bool = False
+
+backend_function_mappings = {
+    "constant" : "",
+    "exp": "jnp.exp",
+    "sin": "jnp.sin",
+    "cos": "jnp.cos",
+    "pow": "jnp.pow",
+    "log": "jnp.log",
+    "sqrt": "jnp.sqrt",
+    "cdf": "jnp.cdf",
+    "erf": "jax.scipy.special.erf",
+    "erfinv": "jax.scipy.special.erfinv",
+    "max": "jnp.max",
+    "sumVectorized": "jnp.sum",
+    "seed": "jnp.seed",
+    "if": "jnp.where"
+}

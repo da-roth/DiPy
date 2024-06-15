@@ -41,3 +41,20 @@ backend_result_classes = {
 
 
 backend_graph_differentiation_bool = True
+
+backend_function_mappings = {
+        #"constant" : "tf.Variable",
+        "exp": "tf.exp",
+        "sin": "tf.sin",
+        "cos": "tf.cos",
+        "pow": "tf.pow",
+        "log": "tf.log",
+        "sqrt": "tf.sqrt",
+        "cdf": "tf.cdf",
+        "erf": "tf.erf",
+        "erfinv": "tf.erfinv",
+        "max": "tf.max",
+        "sumVectorized": "tf.math.reduce_sum",
+        "seed": "tf.seed",
+        "if": "tf.where"
+    }

@@ -160,25 +160,9 @@ class ResultNodeNumpy(ResultNode):
             return namespace["myfunc"]
 
         expression = str(self.operationNode)
-
-        # Replace function names in the expression string
-        function_mappings = {
-            "constant" : "",
-            "exp": "np.exp",
-            "sin": "np.sin",
-            "cos": "np.cos",
-            "pow": "np.pow",
-            "log": "np.log",
-            "sqrt": "np.sqrt",
-            "cdf": "np.cdf",
-            "erf": "scipy.special.erf",
-            "erfinv": "scipy.special.erfinv",
-            "max": "np.max",
-            "sumVectorized": "np.sum",
-            "seed": "np.seed",
-            "if": "np.where"
-        }
         
+        function_mappings = self.get_function_mappings()
+
         for key, value in function_mappings.items():
             expression = expression.replace(key, value)
 

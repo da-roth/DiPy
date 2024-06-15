@@ -170,23 +170,7 @@ class DifferentiationNodeJAX(DifferentiationNode):
 
         expression = str(self.operationNode)
 
-        # Replace function names in the expression string
-        function_mappings = {
-            "constant" : "",
-            "exp": "jnp.exp",
-            "sin": "jnp.sin",
-            "cos": "jnp.cos",
-            "pow": "jnp.pow",
-            "log": "jnp.log",
-            "sqrt": "jnp.sqrt",
-            "cdf": "jnp.cdf",
-            "erf": "jax.scipy.special.erf",
-            "erfinv": "jax.scipy.special.erfinv",
-            "max": "jnp.max",
-            "sumVectorized": "jnp.sum",
-            "seed": "jnp.seed",
-            "if": "jnp.where"
-        }
+        function_mappings = self.get_function_mappings()
         
         for key, value in function_mappings.items():
             expression = expression.replace(key, value)
@@ -232,24 +216,8 @@ class ResultNodeJAX(ResultNode):
             return namespace["myfunc"]
 
         expression = str(self.operationNode)
-
-        # Replace function names in the expression string
-        function_mappings = {
-            "constant" : "",
-            "exp": "jnp.exp",
-            "sin": "jnp.sin",
-            "cos": "jnp.cos",
-            "pow": "jnp.pow",
-            "log": "jnp.log",
-            "sqrt": "jnp.sqrt",
-            "cdf": "jnp.cdf",
-            "erf": "jax.scipy.special.erf",
-            "erfinv": "jax.scipy.special.erfinv",
-            "max": "jnp.max",
-            "sumVectorized": "jnp.sum",
-            "seed": "jnp.seed",
-            "if": "jnp.where"
-        }
+        
+        function_mappings = self.get_function_mappings()
         
         for key, value in function_mappings.items():
             expression = expression.replace(key, value)

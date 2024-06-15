@@ -37,3 +37,8 @@ class BackendConfig:
         backend_graph_differentiation_bool = True # Default value
         BackendConfig.backend_graph_differentiation_bool = getattr(backend_module, 'backend_graph_differentiation_bool', backend_graph_differentiation_bool)
 
+        # Set the backend_function_mappings attribute.
+        backend_function_mappings  = None
+        BackendConfig.backend_function_mappings = getattr(backend_module, 'backend_function_mappings', backend_function_mappings)
+
+

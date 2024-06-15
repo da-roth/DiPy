@@ -40,3 +40,20 @@ backend_result_classes = {
 }
 
 backend_graph_differentiation_bool = True
+
+backend_function_mappings = {
+        "constant" : "",
+        "exp": "np.exp",
+        "sin": "np.sin",
+        "cos": "np.cos",
+        "pow": "np.pow",
+        "log": "np.log",
+        "sqrt": "np.sqrt",
+        "cdf": "np.cdf",
+        "erf": "scipy.special.erf",
+        "erfinv": "scipy.special.erfinv",
+        "max": "np.max",
+        "sumVectorized": "np.sum",
+        "seed": "np.seed",
+        "if": "np.where"
+    }
