@@ -149,24 +149,17 @@ class ResultNodeTF(ResultNode):
 
     def create_optimized_executable(self):
             expression = str(self.operationNode)
-
             function_mappings = self.get_function_mappings()
-
             import re
-            
             for key, value in function_mappings.items():
                 expression = expression.replace(key, value)
-
             # Function to replace 'constant' with 'tf.Variable'
             def replace_constant(match):
                 value = match.group(1)
                 # return f"tf.Variable({value}, dtype=tf.float32)"
                 return f"tf.Variable({value}, dtype=tf.float32)"
             expression = re.sub(r'constant\(([^)]+)\)', replace_constant, expression)
-
             #expression = expression.replace('exp', 'tf.exp').replace('sqrt', 'tf.sqrt').replace('log', 'tf.log').replace('sin', 'tf.sin')
             input_names = self.operationNode.get_input_variables()
-
             tensorflow_func = BackendHelper.create_function_from_expression(expression, input_names,  {'tf': tf})
-
             return tensorflow_func#myfunc_wrapper(tensorflow_func) #returning it in such a way that it needs tensor inputs for now

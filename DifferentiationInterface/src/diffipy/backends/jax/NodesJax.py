@@ -155,14 +155,10 @@ class DifferentiationNodeJAX(DifferentiationNode):
     
     def create_optimized_executable(self):
         expression = str(self.operationNode)
-
         function_mappings = self.get_function_mappings()
-        
         for key, value in function_mappings.items():
             expression = expression.replace(key, value)
-
         input_names = self.operationNode.get_input_variables()
-
         numpy_func = BackendHelper.create_function_from_expression(expression, input_names,  {'jax': jax, 'jnp' : jax.numpy})
         #jitted_numpy_func = jit(nopython=True)(numpy_func)
         jax.make_jaxpr(numpy_func)
@@ -189,14 +185,10 @@ class ResultNodeJAX(ResultNode):
     
     def create_optimized_executable(self):
         expression = str(self.operationNode)
-
         function_mappings = self.get_function_mappings()
-        
         for key, value in function_mappings.items():
             expression = expression.replace(key, value)
-
         input_names = self.operationNode.get_input_variables()
-
         numpy_func = BackendHelper.create_function_from_expression(expression, input_names,  {'jax': jax, 'jnp' : jax.numpy})
         #jitted_numpy_func = jit(nopython=True)(numpy_func)
         jax.make_jaxpr(numpy_func)
