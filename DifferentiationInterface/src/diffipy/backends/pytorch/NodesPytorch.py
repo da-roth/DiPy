@@ -3,6 +3,7 @@ from ...Node import *
 from ...NodesVariables import *
 from ...NodesOperations import *
 from ...NodesDifferentiation import *
+from ..BackendHelper import *
 
 # Import backend specific packages
 import torch
@@ -107,6 +108,9 @@ class IfNodeTorch(IfNode):
       false_value = self.false_value.Run()
       return torch.where(condition_value, true_value, false_value)
     
+##
+## Differentiation node is created on the graph when .grad() is called for on a node
+##
 class DifferentiationNodeTorch(DifferentiationNode):
     def __init__(self, operand, diffDirection):
         super().__init__(operand, diffDirection)
@@ -142,6 +146,9 @@ class DifferentiationNodeTorch(DifferentiationNode):
             derivative = self.diffDirection.value.grad.item()
             return derivative
     
+##
+## Result node is used within performance testing. It contains the logic to create optimized executables and eval/grad of these.
+##
 class ResultNodeTorch(ResultNode):
     def __init__(self, operationNode):
         super().__init__(operationNode)
@@ -166,24 +173,6 @@ class ResultNodeTorch(ResultNode):
 
 
     def create_optimized_executable(self):
-            def create_function_from_expression(expression_string, expression_inputs, backend):
-                # Generate the function definition as a string
-                inputs = ", ".join(expression_inputs)
-                function_code = f"def myfunc({inputs}):\n    return {expression_string}\n"
-
-                # Compile the function code
-                compiled_code = compile(function_code, "<string>", "exec")
-                
-                # Combine the provided backend with an empty dictionary to serve as the globals
-                namespace = {**backend}
-                exec(compiled_code, namespace)
-                
-                # Retrieve the dynamically created function
-                #created_function = namespace["myfunc"]
-            
-                # Return the dynamically created function
-                return namespace["myfunc"]
-
             expression = str(self.operationNode)
 
             function_mappings = self.get_function_mappings()
@@ -194,7 +183,7 @@ class ResultNodeTorch(ResultNode):
             #expression = expression.replace('exp', 'torch.exp').replace('sqrt', 'torch.sqrt').replace('log', 'torch.log').replace('sin', 'torch.sin')
             input_names = self.operationNode.get_input_variables()
 
-            torch_func = create_function_from_expression(expression, input_names,  {'torch': torch})
+            torch_func = BackendHelper.create_function_from_expression(expression, input_names,  {'torch': torch})
 
             # Wrap it such that it can get values as inputs
             def myfunc_wrapper(func):

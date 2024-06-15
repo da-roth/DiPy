@@ -3,6 +3,7 @@ from ...Node import *
 from ...NodesVariables import *
 from ...NodesOperations import *
 from ...NodesDifferentiation import *
+from ..BackendHelper import *
 
 # Import backend specific packages
 import numpy as np
@@ -85,16 +86,17 @@ class IfNodeNumpy(IfNode):
             false_value = self.false_value.Run()
             return np.where(condition_value, true_value, false_value)
 
+##
+## Differentiation node is created on the graph when .grad() is called for on a node
+##
 class DifferentiationNodeNumpy(DifferentiationNode):
 
     def __init__(self, operand, diffDirection):
         super().__init__(operand, diffDirection)
 
-
     def backend_specific_grad(self):
         result = self.Run()
         h = 0.00001
-
         # Handle the case where self.diffDirection is a list, hence Gradient
         if isinstance(self.diffDirection, list):
             gradients = []
@@ -117,20 +119,15 @@ class DifferentiationNodeNumpy(DifferentiationNode):
             self.diffDirection.value = original_value
             return gradient
     
+##
+## Result node is used within performance testing. It contains the logic to create optimized executables and eval/grad of these.
+##
 class ResultNodeNumpy(ResultNode):
     def __init__(self, operationNode):
         super().__init__(operationNode)
     def eval(self):
         return self.operationNode.Run()
-   
-    # def eval_and_grad_of_function(sef, func, input_dict, diff_dict, diffDirection, h = 0.00001):
-    #     result = func(**input_dict)
-    #     args_dict_shifted = input_dict.copy()
-    #     args_dict_shifted['s0'] += h
-    #     result_h = func(**args_dict_shifted)
-    #     gradient = (result_h - result) / h
-    #     return result, gradient
-    
+       
     def eval_and_grad_of_function(self, func, input_dict, diff_dict, h=0.00001):
         result = func(**input_dict)
         gradients = {}
@@ -144,21 +141,6 @@ class ResultNodeNumpy(ResultNode):
         return result, gradients
     
     def create_optimized_executable(self):
-        def create_function_from_expression(expression_string, expression_inputs, backend):
-            # Generate the function definition as a string
-            inputs = ", ".join(expression_inputs)
-            function_code = f"def myfunc({inputs}):\n    return {expression_string}\n"
-
-            # Compile the function code
-            compiled_code = compile(function_code, "<string>", "exec")
-            
-            # Combine the provided backend with an empty dictionary to serve as the globals
-            namespace = {**backend}
-            exec(compiled_code, namespace)
-            
-            # Return the dynamically created function
-            return namespace["myfunc"]
-
         expression = str(self.operationNode)
         
         function_mappings = self.get_function_mappings()
@@ -168,7 +150,7 @@ class ResultNodeNumpy(ResultNode):
 
         input_names = self.operationNode.get_input_variables()
 
-        numpy_func = create_function_from_expression(expression, input_names,  {'np': np, 'scipy.special' : scipy.special})
+        numpy_func = BackendHelper.create_function_from_expression(expression, input_names,  {'np': np, 'scipy.special' : scipy.special})
         jitted_numpy_func = jit(nopython=True)(numpy_func)
 
         return  jitted_numpy_func# numpy_func

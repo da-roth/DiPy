@@ -3,6 +3,7 @@ from ...Node import *
 from ...NodesVariables import *
 from ...NodesOperations import *
 from ...NodesDifferentiation import *
+from ..BackendHelper import *
 
 # Import backend specific packages
 import tensorflow as tf
@@ -103,6 +104,9 @@ class IfNodeTF(IfNode):
         false_value = self.false_value.Run()
         return tf.where(condition_value, true_value, false_value)
 
+##
+## Differentiation node is created on the graph when .grad() is called for on a node
+##
 class DifferentiationNodeTF(DifferentiationNode):
     def __init__(self, operand, diffDirection):
         super().__init__(operand, diffDirection)
@@ -127,6 +131,9 @@ class DifferentiationNodeTF(DifferentiationNode):
             gradient = tape.gradient(forward_evaluation, self.diffDirection.value).numpy()
             return gradient
 
+##
+## Result node is used within performance testing. It contains the logic to create optimized executables and eval/grad of these.
+##
 class ResultNodeTF(ResultNode):
     def __init__(self, operationNode):
         super().__init__(operationNode)
@@ -141,28 +148,6 @@ class ResultNodeTF(ResultNode):
         return result, gradients
 
     def create_optimized_executable(self):
-            def create_function_from_expression(expression_string, expression_inputs, backend):
-                # Generate the function definition as a string
-                inputs = ", ".join(expression_inputs)
-                function_code = f"def myfunc({inputs}):\n    return {expression_string}\n"
-                
-                # Print the generated function code
-                #print("Generated Function Code:")
-                #print(function_code)
-
-                # Compile the function code
-                compiled_code = compile(function_code, "<string>", "exec")
-                
-                # Combine the provided backend with an empty dictionary to serve as the globals
-                namespace = {**backend}
-                exec(compiled_code, namespace)
-                
-                # Retrieve the dynamically created function
-                #created_function = namespace["myfunc"]
-            
-                # Return the dynamically created function
-                return namespace["myfunc"]
-
             expression = str(self.operationNode)
 
             function_mappings = self.get_function_mappings()
@@ -182,6 +167,6 @@ class ResultNodeTF(ResultNode):
             #expression = expression.replace('exp', 'tf.exp').replace('sqrt', 'tf.sqrt').replace('log', 'tf.log').replace('sin', 'tf.sin')
             input_names = self.operationNode.get_input_variables()
 
-            tensorflow_func = create_function_from_expression(expression, input_names,  {'tf': tf})
+            tensorflow_func = BackendHelper.create_function_from_expression(expression, input_names,  {'tf': tf})
 
             return tensorflow_func#myfunc_wrapper(tensorflow_func) #returning it in such a way that it needs tensor inputs for now

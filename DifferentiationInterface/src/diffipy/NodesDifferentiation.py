@@ -1,9 +1,12 @@
 from .NodesOperations import *
 
-#
-# Node that are used for differentiation, performance testing and graph analysis
-#
+###
+### Node that are used for differentiation, performance testing and graph analysis
+###
 
+##
+## Differentiation node is created on the graph when .grad() is called for on a node
+##
 class DifferentiationNode(UnitaryNode):
     def __init__(self, operand, diffDirection):
         super().__init__()
@@ -17,6 +20,9 @@ class DifferentiationNode(UnitaryNode):
     def __str__(self):
         return f"grad({str(self.operand)})"
     
+##
+## Result node is used within performance testing. It contains the logic to create optimized executables and eval/grad of these.
+##
 class ResultNode(Node):
     def __init__(self, operationNode):
         super().__init__()

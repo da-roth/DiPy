@@ -3,6 +3,7 @@ from ...Node import *
 from ...NodesVariables import *
 from ...NodesOperations import *
 from ...NodesDifferentiation import *
+from ..BackendHelper import *
 
 # Import backend specific packages
 import jax
@@ -102,6 +103,9 @@ class IfNodeJAX(IfNode):
         false_value = self.false_value.Run()
         return jnp.where(condition_value, true_value, false_value)
 
+##
+## Differentiation node is created on the graph when .grad() is called for on a node
+##
 class DifferentiationNodeJAX(DifferentiationNode):
     def __init__(self, operand, diffDirection):
         super().__init__(operand, diffDirection)
@@ -114,9 +118,6 @@ class DifferentiationNodeJAX(DifferentiationNode):
         myfunc = self.operand.get_optimized_executable()
         _, gradient = self.eval_and_grad_of_function(myfunc, input_dict, input_dict)
 
-        #print(self.diffDirection)
-        # gradient_key = self.diffDirection.identifier
-        # Handle the case where diffDirection is a list
         if isinstance(self.diffDirection, list):
             gradients = {}
             for direction in self.diffDirection:
@@ -153,21 +154,6 @@ class DifferentiationNodeJAX(DifferentiationNode):
         return result_optimized, gradient
     
     def create_optimized_executable(self):
-        def create_function_from_expression(expression_string, expression_inputs, backend):
-            # Generate the function definition as a string
-            inputs = ", ".join(expression_inputs)
-            function_code = f"def myfunc({inputs}):\n    return {expression_string}\n"
-            
-            print(inputs)
-            print(function_code)
-            # Compile the function code
-            compiled_code = compile(function_code, "<string>", "exec")
-            
-            # Combine the provided backend with an empty dictionary to serve as the globals
-            namespace = {**backend}
-            exec(compiled_code, namespace)
-            return namespace["myfunc"]
-
         expression = str(self.operationNode)
 
         function_mappings = self.get_function_mappings()
@@ -177,15 +163,15 @@ class DifferentiationNodeJAX(DifferentiationNode):
 
         input_names = self.operationNode.get_input_variables()
 
-        numpy_func = create_function_from_expression(expression, input_names,  {'jax': jax, 'jnp' : jax.numpy})
+        numpy_func = BackendHelper.create_function_from_expression(expression, input_names,  {'jax': jax, 'jnp' : jax.numpy})
         #jitted_numpy_func = jit(nopython=True)(numpy_func)
         jax.make_jaxpr(numpy_func)
         return  numpy_func#jitted_numpy_func# numpy_func
 
 
-
-    
-
+##
+## Result node is used within performance testing. It contains the logic to create optimized executables and eval/grad of these.
+##
 class ResultNodeJAX(ResultNode):
     def __init__(self, operationNode):
         super().__init__(operationNode)
@@ -202,21 +188,8 @@ class ResultNodeJAX(ResultNode):
         return result_optimized, gradient
     
     def create_optimized_executable(self):
-        def create_function_from_expression(expression_string, expression_inputs, backend):
-            # Generate the function definition as a string
-            inputs = ", ".join(expression_inputs)
-            function_code = f"def myfunc({inputs}):\n    return {expression_string}\n"
-            
-            # Compile the function code
-            compiled_code = compile(function_code, "<string>", "exec")
-            
-            # Combine the provided backend with an empty dictionary to serve as the globals
-            namespace = {**backend}
-            exec(compiled_code, namespace)
-            return namespace["myfunc"]
-
         expression = str(self.operationNode)
-        
+
         function_mappings = self.get_function_mappings()
         
         for key, value in function_mappings.items():
@@ -224,7 +197,7 @@ class ResultNodeJAX(ResultNode):
 
         input_names = self.operationNode.get_input_variables()
 
-        numpy_func = create_function_from_expression(expression, input_names,  {'jax': jax, 'jnp' : jax.numpy})
+        numpy_func = BackendHelper.create_function_from_expression(expression, input_names,  {'jax': jax, 'jnp' : jax.numpy})
         #jitted_numpy_func = jit(nopython=True)(numpy_func)
         jax.make_jaxpr(numpy_func)
         return  numpy_func#jitted_numpy_func# numpy_func
