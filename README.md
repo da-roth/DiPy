@@ -80,17 +80,19 @@ for backend in backend_array:
     dp.setBackend(backend)
 
     x_value = 1.7
+    y_value = 0.7
     x = dp.variable(x_value)
+    y = dp.variable(y_value)
     a = dp.sqrt(2)
-    y = dp.exp(x * a)
+    f = dp.exp(x * a) + dp.exp(y)
     
-    result = y.eval()
-    derivative = y.grad(x)
-#Backend      Result       Gradient    
-#numpy        11.069162    15.654270   
-#torch        11.069163    15.654160   
-#tensorflow   11.069163    15.654160   
-#jax          11.069162    15.654160     
+    result = f.eval()
+    derivative = f.grad()
+# Backend      Result       Gradient    
+# numpy        13.082915    [15.6542699, 2.0137627]
+# torch        13.082916    [15.6541604, 2.0137526]
+# tensorflow   13.082916    [15.6541605, 2.0137527]
+# jax          13.082915    [15.6541595, 2.0137526]  
 ```
 
 ## General remarks

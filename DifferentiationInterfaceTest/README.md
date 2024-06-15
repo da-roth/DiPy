@@ -37,7 +37,9 @@ for backend in backend_array:
     sigma = dp.variable(sigma_value, 'input','sigma')
     dt = dp.variable(dt_value, 'input','dt')
     z = dp.variable(z_value, 'randomVariableNormal','z')
-    input_variables = [s0, K, r, sigma, dt, z]
+
+    func_input_variables = [s0, K, r, sigma, dt, z]
+    diff_variables = [s0, K, r, sigma, dt] 
 
     # Record Tape: Standard Monte Carlo
 
@@ -49,16 +51,16 @@ for backend in backend_array:
     dp.seed(seed)
     pre_computed_random_variables = z.NewSample(N) # pre-evaluate random samples
 
-    PV_standard.run_performance_test(input_variables, warmup_iterations = 10, test_iterations = 100)
+    PV_standard.run_performance_test(func_input_variables, diff_variables, warmup_iterations = 10, test_iterations = 40)
 
-# Backend              Result       Gradient (1. entry)  mean runtime    variance runtime
-# nump                 10.023817    0.500207             0.036675        0.000002       
-# numpy_jit            10.024070    0.500215             0.031361        0.000036       
-# torch                10.020878    0.499224             0.002437        0.000020       
-# torch_optimized      10.020878    0.499224             0.001283        0.000014       
-# tensorflow           9.999600     0.499357             0.024196        0.000058       
-# tensorflow_optimized 9.999600     0.499357             0.016357        0.000000       
-# jax                  10.033216    0.499721             0.017167        0.002474 
+# Backend              Eval-Result  mean runtime    variance runtime    gradient directions: {'s0', 'r', 'K', 'sigma', 'dt'}
+# numpy                10.023520    0.054356        0.000020            [0.5002012963828406, -0.36360554602765655, 39.996882379789156, 39.89751398876251, 7.9844421986052785]
+# numpy_as_func        10.023520    0.056490        0.000057            {'s0': 0.5002013217847434, 'K': -0.36360553590242256, 'r': 39.99688241371757, 'sigma': 39.89751398751906, 'dt': 7.984442234842958}
+# torch                10.020878    0.007389        0.000000            [0.4992237389087677, -0.3627409040927887, 39.9015007019043, 39.90696334838867, 7.981120586395264]
+# torch_as_func        10.020875    0.001370        0.000000            [tensor(0.4992), tensor(-0.3627), tensor(39.9015), tensor(39.9070), tensor(7.9811)]
+# tensorflow           9.999600     0.080152        0.000012            [0.49935734, -0.36305577, 39.936134, 39.80618, 7.9677343]
+# tensorflow_as_func   9.999602     0.016340        0.000001            [<tf.Tensor: shape=(), dtype=float32, numpy=0.49935734>, <tf.Tensor: shape=(), dtype=float32, numpy=-0.36305577>, <tf.Tensor: shape=(), dtype=float32, numpy=39.936134>, <tf.Tensor: shape=(), dt....
+# jax_as_func          10.033226    0.012359        0.000002            {'s0': Array(0.49972072, dtype=float32, weak_type=True), 'K': Array(-0.36308047, dtype=float32, weak_type=True), 'r': Array(39.938858, dtype=float32, weak_type=True), 'sigma': Array(39.954735, ....
 ```
 
 
