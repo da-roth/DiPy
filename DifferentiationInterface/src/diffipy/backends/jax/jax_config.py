@@ -39,8 +39,4 @@ backend_result_classes = {
     }
 }
 
-backend_graph_differentiation_bool = {
-    "jax": {
-        "differentiation_bool": False
-    }
-}
+backend_graph_differentiation_bool = False

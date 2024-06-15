@@ -39,8 +39,23 @@ backend_result_classes = {
     }
 }
 
-backend_graph_differentiation_bool = {
-    "torch": {
-        "differentiation_bool": True
+backend_graph_differentiation_bool = True
+
+backend_function_mappings = {
+    "torch" : {
+            "constant" : "torch.tensor",
+            "exp": "torch.exp",
+            "sin": "torch.sin",
+            "cos": "torch.cos",
+            "pow": "torch.pow",
+            "log": "torch.log",
+            "sqrt": "torch.sqrt",
+            "cdf": "torch.cdf",
+            "erf": "torch.erf",
+            "erfinv": "torch.erfinv",
+            "max": "torch.max",
+            "sumVectorized": "torch.sum",
+            "seed": "torch.seed",
+            "if": "torch.where"
+        }
     }
-}

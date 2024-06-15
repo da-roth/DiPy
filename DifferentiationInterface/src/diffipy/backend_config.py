@@ -34,4 +34,6 @@ class BackendConfig:
         BackendConfig.backend_result_classes = getattr(backend_module, 'backend_result_classes', {})
 
         # True / False. Bool that states if the backend is able to do differentiation of the recorded graph (e.g. false for Jax since it needs an executable)
-        BackendConfig.backend_graph_differentiation_bool = getattr(backend_module, 'backend_graph_differentiation_bool', {})
+        backend_graph_differentiation_bool = True # Default value
+        BackendConfig.backend_graph_differentiation_bool = getattr(backend_module, 'backend_graph_differentiation_bool', backend_graph_differentiation_bool)
+

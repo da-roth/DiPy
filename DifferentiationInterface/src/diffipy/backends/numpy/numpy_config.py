@@ -39,9 +39,4 @@ backend_result_classes = {
     }
 }
 
-backend_graph_differentiation_bool = {
-    "numpy": {
-        "differentiation_bool": True
-    }
-}
-
+backend_graph_differentiation_bool = True
