@@ -107,89 +107,124 @@ class IfNodeAadc(IfNode):
 class DifferentiationNodeAadc(DifferentiationNode):
     def __init__(self, operand, diffDirection):
         super().__init__(operand, diffDirection)
-
     def backend_specific_grad(self):
-        # Handle the case where self.diffDirection is a list
+
+        input_variables = self.get_inputs()
+        #print(input_variables)
+        input_dict = {var.identifier: var.value for var in input_variables}
+
+        myfunc = self.operand.get_optimized_executable()
+        _, gradient = self.eval_and_grad_of_function(myfunc, input_dict, input_dict)
+
         if isinstance(self.diffDirection, list):
-            derivatives = []
+            gradients = {}
             for direction in self.diffDirection:
-                # Reset derivative graph for each tensor
-                if direction.value.grad is not None:
-                    direction.value.grad.zero_()
-                forward_evaluation = self.Run()
-
-                # Backward pass
-                forward_evaluation.backward()
-
-                # Get the gradient
-                derivative = direction.value.grad.item()
-                derivatives.append(derivative)
-            return derivatives
+                if isinstance(direction, VariableNodeAadc):
+                    gradient_key = direction.identifier
+                else:
+                    gradient_key = direction
+                
+                if gradient_key not in gradient:
+                    raise ValueError(f"Gradient for '{gradient_key}' not found in the computed gradients.")
+                
+                gradients[gradient_key] = gradient[gradient_key]
+            gradients_as_array = list(gradients.values())
+            return gradients_as_array
         else:
-            # Handle the case where self.diffDirection is a single object
-            # Reset derivative graph
-            if self.diffDirection.value.grad is not None:
-                self.diffDirection.value.grad.zero_()
-            forward_evaluation = self.Run()
-
-            # Backward pass
-            forward_evaluation.backward()
-
-            # Get the gradient
-            derivative = self.diffDirection.value.grad.item()
-            return derivative
+            # Handle the case where diffDirection is not a list
+            if isinstance(self.diffDirection, VariableNodeAadc):
+                gradient_key = self.diffDirection.identifier
+            else:
+                gradient_key = self.diffDirection
+            
+            if gradient_key not in gradient:
+                raise ValueError(f"Gradient for '{gradient_key}' not found in the computed gradients.")
+           
+            return gradient[gradient_key]
     
+    def eval_and_grad_of_function(sef, myfunc, input_dict, diff_dict):
+        
+        # Here we try to add aadc logic. myfunc is the func of the graph with inputs: input_dict and wanted derivatives diff_dict
+        funcs = aadc.Functions()
+        
+        #keys_array = list(input_dict.keys())
+        values_array = list(input_dict.values())
+        
+        valuesAadc = []
+        for input_value in values_array:
+            value = aadc.idouble(input_value)
+            valuesAadc.append(value)
+        
+        funcs.start_recording()
+        
+        aadcArgs = []
+        for valueAadc in valuesAadc:
+            aadcArgs.append(valueAadc.mark_as_input())
+
+        index = 0
+        aadc_input_dict = {}
+        for key in input_dict:
+            aadc_input_dict[key] = valuesAadc[index]
+            index += 1
+        
+        # Evaluate func with aadc idoubles
+        result_optimized = myfunc(**aadc_input_dict)
+
+        fRes = result_optimized.mark_as_output()
+        
+        funcs.stop_recording()
+        
+        # Create input dictionary for the aadc.evaluate
+        
+        # Create input dictionary for the aadc.evaluate
+        inputs = {}
+        for aadc_arg, value_entry in zip(aadcArgs, values_array):
+            inputs[aadc_arg] = value_entry
+
+        request = {fRes: [arg for arg in aadcArgs]}
+        
+        Res = aadc.evaluate(funcs, request, inputs, aadc.ThreadPool(4))
+        
+        aadc_eval_result = Res[0][fRes]
+        # aadc_eval_diff = Res[1][fRes][aadcArgs[0]]
+        # aadc_eval_diff2 = Res[1][fRes][aadcArgs[1]]
+        # gradient = []
+        # for arg in aadcArgs:
+        #     gradient.append(Res[1][fRes][arg])
+        
+        gradient_dict = {}
+        for aadc_arg, input_key in zip(aadcArgs, input_dict):
+            gradient_dict[input_key] = Res[1][fRes][aadc_arg]
+        
+        return aadc_eval_result, gradient_dict
+    
+    
+
 ##
 ## Result node is used within performance testing. It contains the logic to create optimized executables and eval/grad of these.
 ##
 class ResultNodeAadc(ResultNode):
     def __init__(self, operationNode):
         super().__init__(operationNode)
-
     def eval(self):
         return self.operationNode.Run().item()
-        
+    
     def eval_and_grad_of_function(sef, myfunc, input_dict, diff_dict):
-        
-        result = myfunc(**input_dict)
-
-        for key in diff_dict: #Reset all gradients first
-            diff_dict[key].grad = None
-
-        result.backward()
-
-        gradient = []
-        for key in diff_dict:
-            gradient_entry = diff_dict[key].grad
-            gradient.append( gradient_entry)
-        return result, gradient
-
-
+        result_optimized = myfunc(**input_dict)#s0=s0.value, K=K.value, r=r.value, sigma=sigma.value, dt = dt.value, z=pre_computed_random_variables)
+        def myfunc_with_dict(args_dict):
+            return myfunc(**args_dict)
+        gradient_func = jax.grad(myfunc_with_dict)
+        gradient_all_directions = gradient_func(input_dict)
+        gradient = {key: gradient_all_directions[key] for key in diff_dict.keys()}
+        return result_optimized, gradient
+    
     def create_optimized_executable(self):
-            expression = str(self.operationNode)
-
-            function_mappings = self.get_function_mappings()
-
-            for key, value in function_mappings.items():
-                expression = expression.replace(key, value)
-
-            #expression = expression.replace('exp', 'Aadc.exp').replace('sqrt', 'Aadc.sqrt').replace('log', 'Aadc.log').replace('sin', 'Aadc.sin')
-            input_names = self.operationNode.get_input_variables()
-
-            Aadc_func = BackendHelper.create_function_from_expression(expression, input_names,  {'Aadc': Aadc})
-
-            # Wrap it such that it can get values as inputs
-            def myfunc_wrapper(func):
-                def wrapped_func(*args):#, **kwargs):
-                    # Convert all positional arguments to Aadc.tensor
-                    converted_args = [Aadc.tensor(arg.value) for arg in args]
-                    
-                    # # Convert all keyword arguments to Aadc.tensor
-                    # converted_kwargs = {key: Aadc.tensor(value) for key, value in kwargs.items()}
-                    
-                    # Call the original function with converted arguments
-                    return func(*converted_args)#, **converted_kwargs)
-                
-                return wrapped_func
-
-            return Aadc_func#myfunc_wrapper(Aadc_func) #returning it in such a way that it needs tensor inputs for now
+        expression = str(self.operationNode)
+        function_mappings = self.get_function_mappings()
+        for key, value in function_mappings.items():
+            expression = expression.replace(key, value)
+        input_names = self.operationNode.get_input_variables()
+        numpy_func = BackendHelper.create_function_from_expression(expression, input_names,  {'aadc': aadc, 'np': np})
+        #jitted_numpy_func = jit(nopython=True)(numpy_func)
+        #jax.make_jaxpr(numpy_func)
+        return  numpy_func #jitted_numpy_func# numpy_func

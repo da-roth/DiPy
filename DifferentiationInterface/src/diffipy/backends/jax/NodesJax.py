@@ -152,17 +152,6 @@ class DifferentiationNodeJAX(DifferentiationNode):
         gradient_all_directions = gradient_func(input_dict)
         gradient = {key: gradient_all_directions[key] for key in diff_dict.keys()}
         return result_optimized, gradient
-    
-    def create_optimized_executable(self):
-        expression = str(self.operationNode)
-        function_mappings = self.get_function_mappings()
-        for key, value in function_mappings.items():
-            expression = expression.replace(key, value)
-        input_names = self.operationNode.get_input_variables()
-        numpy_func = BackendHelper.create_function_from_expression(expression, input_names,  {'jax': jax, 'jnp' : jax.numpy})
-        #jitted_numpy_func = jit(nopython=True)(numpy_func)
-        jax.make_jaxpr(numpy_func)
-        return  numpy_func#jitted_numpy_func# numpy_func
 
 
 ##
