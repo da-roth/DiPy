@@ -215,7 +215,7 @@ class ResultNodeAadc(ResultNode):
         result_optimized = numpy_func (**aadc_input_dict)
 
         fRes = result_optimized.mark_as_output()
-        
+
         funcs.stop_recording()
         
 
