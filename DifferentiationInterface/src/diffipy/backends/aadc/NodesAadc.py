@@ -113,7 +113,7 @@ class DifferentiationNodeAadc(DifferentiationNode):
         #print(input_variables)
         input_dict = {var.identifier: var.value for var in input_variables}
 
-        myfunc = self.operand.get_optimized_executable()
+        myfunc = self.operand.get_optimized_executable(input_dict, input_dict)
         
         result_class = ResultNodeAadc(self)
         
@@ -213,7 +213,7 @@ class ResultNodeAadc(ResultNode):
         
         return aadc_eval_result.tolist()[0], gradient_dict
     
-    def create_optimized_executable(self):
+    def create_optimized_executable(self, input_dict, diff_dict): # For AADC input_dict and diff_dict are needed to create kernel through forward_pass
         expression = str(self.operationNode)
         function_mappings = self.get_function_mappings()
         for key, value in function_mappings.items():

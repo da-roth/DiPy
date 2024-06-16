@@ -147,7 +147,7 @@ class ResultNodeTF(ResultNode):
         gradients = tape.gradient(result, [diff_dict[key] for key in diff_dict])
         return result, gradients
 
-    def create_optimized_executable(self):
+    def create_optimized_executable(self, input_dict = None, diff_dict = None): #If input_dict and diff_dict are None, default of the graph are used
             expression = str(self.operationNode)
             function_mappings = self.get_function_mappings()
             import re

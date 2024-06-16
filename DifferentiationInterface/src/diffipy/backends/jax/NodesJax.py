@@ -115,7 +115,7 @@ class DifferentiationNodeJAX(DifferentiationNode):
         #print(input_variables)
         input_dict = {var.identifier: var.value for var in input_variables}
 
-        myfunc = self.operand.get_optimized_executable()
+        myfunc = self.operand.get_optimized_executable(input_dict, input_dict)
         
         result_class = ResultNodeJAX(self)
         
@@ -165,7 +165,7 @@ class ResultNodeJAX(ResultNode):
         gradient = {key: gradient_all_directions[key] for key in diff_dict.keys()}
         return result_optimized, gradient
     
-    def create_optimized_executable(self):
+    def create_optimized_executable(self, input_dict = None, diff_dict = None): #If input_dict and diff_dict are None, default of the graph are used
         expression = str(self.operationNode)
         function_mappings = self.get_function_mappings()
         for key, value in function_mappings.items():

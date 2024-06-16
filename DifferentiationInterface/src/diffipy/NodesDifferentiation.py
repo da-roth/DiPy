@@ -86,7 +86,7 @@ class ResultNode(Node):
         diff_dict = {var.identifier: var.value for var in diff_variables}
         variable_dict = {var.identifier for var in diff_variables}
 
-        myfunc = self.operationNode.get_optimized_executable()
+        myfunc = self.operationNode.get_optimized_executable(input_dict, diff_dict)
 
         time_total_optimized = 0
         times_optimized = []
