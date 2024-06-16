@@ -77,7 +77,7 @@ class RandomVariableNodeAadc(RandomVariableNode):
 
 class RandomVariableNodeAadcNormal(RandomVariableNode):
     def NewSample(self, sampleSize = 1):
-        self.value = aadc.idouble(np.random.normal(size = sampleSize))
+        self.value = np.random.normal(size = sampleSize)
 
 class SumNodeVectorizedAadc(Node):
     def __init__(self, operand):
@@ -107,6 +107,7 @@ class IfNodeAadc(IfNode):
 class DifferentiationNodeAadc(DifferentiationNode):
     def __init__(self, operand, diffDirection):
         super().__init__(operand, diffDirection)
+        
     def backend_specific_grad(self):
 
         input_variables = self.get_inputs()
@@ -154,65 +155,24 @@ class ResultNodeAadc(ResultNode):
     def __init__(self, operationNode):
         super().__init__(operationNode)
     def eval(self):
-        return self.operationNode.Run()
+        # #result
+        # #print('fail here')
+        # return self.operationNode.Run()
+        input_variables = self.operationNode.get_inputs()
+        #print(input_variables)
+        input_dict = {var.identifier: var.value for var in input_variables}
+
+        myfunc = self.operationNode.get_optimized_executable(input_dict, input_dict)
+        
+        result_class = ResultNodeAadc(self)
+        
+        result, gradient = result_class.eval_and_grad_of_function(myfunc, input_dict, input_dict)
+        return result
     
     
     def eval_and_grad_of_function(self, myfunc, input_dict, diff_dict):
         return myfunc(input_dict)
-        # # Here we try to add aadc logic. myfunc is the func of the graph with inputs: input_dict and wanted derivatives diff_dict
-        # funcs = aadc.Functions()
-        
-        # #keys_array = list(input_dict.keys())
-        # values_array = list(input_dict.values())
-        
-        # valuesAadc = []
-        # for input_value in values_array:
-        #     value = aadc.idouble(input_value)
-        #     valuesAadc.append(value)
-        
-        # funcs.start_recording()
-        
-        # aadcArgs = []
-        # for valueAadc in valuesAadc:
-        #     aadcArgs.append(valueAadc.mark_as_input())
 
-        # index = 0
-        # aadc_input_dict = {}
-        # for key in input_dict:
-        #     aadc_input_dict[key] = valuesAadc[index]
-        #     index += 1
-        
-        # # Evaluate func with aadc idoubles
-        # result_optimized = myfunc(**aadc_input_dict)
-
-        # fRes = result_optimized.mark_as_output()
-        
-        # funcs.stop_recording()
-        
-        # # Create input dictionary for the aadc.evaluate
-        
-        # # Create input dictionary for the aadc.evaluate
-        # inputs = {}
-        # for aadc_arg, value_entry in zip(aadcArgs, values_array):
-        #     inputs[aadc_arg] = value_entry
-
-        # request = {fRes: [arg for arg in aadcArgs]}
-        
-        # Res = aadc.evaluate(funcs, request, inputs, aadc.ThreadPool(4))
-        
-        # aadc_eval_result = Res[0][fRes]
-        # # aadc_eval_diff = Res[1][fRes][aadcArgs[0]]
-        # # aadc_eval_diff2 = Res[1][fRes][aadcArgs[1]]
-        # # gradient = []
-        # # for arg in aadcArgs:
-        # #     gradient.append(Res[1][fRes][arg])
-        
-        # gradient_dict = {}
-        # for aadc_arg, input_key in zip(aadcArgs, input_dict):
-        #     gradient_dict[input_key] = Res[1][fRes][aadc_arg]#currently only one-dimensional output
-        
-        # return aadc_eval_result.tolist()[0], gradient_dict
-    
     def create_optimized_executable(self, initial_input_dict, diff_dict): # For AADC input_dict and diff_dict are needed to create kernel through forward_pass
         expression = str(self.operationNode)
         function_mappings = self.get_function_mappings()
@@ -229,24 +189,28 @@ class ResultNodeAadc(ResultNode):
         
         #keys_array = list(input_dict.keys())
         values_array = list(initial_input_dict.values())
-        
+
         valuesAadc = []
-        for input_value in values_array:
-            value = aadc.idouble(input_value)
-            valuesAadc.append(value)
-        
-        funcs.start_recording()
-        
         aadcArgs = []
-        for valueAadc in valuesAadc:
-            aadcArgs.append(valueAadc.mark_as_input())
+
+        funcs.start_recording()
+
+        for input_value in values_array:
+            if isinstance(input_value, np.ndarray):
+                value = aadc.idouble(input_value[0])
+                valuesAadc.append(value)
+                aadcArgs.append(value.mark_as_input_no_diff())
+            else:
+                value = input_value
+                valuesAadc.append(value)
+                aadcArgs.append(value.mark_as_input())
 
         index = 0
         aadc_input_dict = {}
         for key in initial_input_dict:
             aadc_input_dict[key] = valuesAadc[index]
             index += 1
-        
+
         # Evaluate func with aadc idoubles
         result_optimized = numpy_func (**aadc_input_dict)
 
@@ -255,7 +219,9 @@ class ResultNodeAadc(ResultNode):
         funcs.stop_recording()
         
         def aadc_kernel_func(input_dict):
+            #print(input_dict)
             values_array = list(input_dict.values())
+            #print(values_array)
             # Create input dictionary for the aadc.evaluate
             inputs = {}
             for aadc_arg, value_entry in zip(aadcArgs, values_array):
@@ -266,6 +232,7 @@ class ResultNodeAadc(ResultNode):
             Res = aadc.evaluate(funcs, request, inputs, aadc.ThreadPool(4))
             
             aadc_eval_result = Res[0][fRes]
+            #print(aadc_eval_result)
             # aadc_eval_diff = Res[1][fRes][aadcArgs[0]]
             # aadc_eval_diff2 = Res[1][fRes][aadcArgs[1]]
             # gradient = []
@@ -274,10 +241,14 @@ class ResultNodeAadc(ResultNode):
             
             gradient_dict = {}
             for aadc_arg, input_key in zip(aadcArgs, input_dict):
-                gradient_dict[input_key] = Res[1][fRes][aadc_arg]#currently only one-dimensional output
+                gradient_dict[input_key] = np.sum(Res[1][fRes][aadc_arg])#currently only one-dimensional output
             
-            return aadc_eval_result.tolist()[0], gradient_dict
+            return np.sum(aadc_eval_result), gradient_dict
         
-    
+        #print(initial_input_dict)
+        test, test2 = aadc_kernel_func(initial_input_dict)
+        #print(test)
+        #print(test2)
+        
         return  aadc_kernel_func #numpy_func 
     

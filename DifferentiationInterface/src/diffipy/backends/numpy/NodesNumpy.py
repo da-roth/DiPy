@@ -148,7 +148,7 @@ class ResultNodeNumpy(ResultNode):
         for key, value in function_mappings.items():
             expression = expression.replace(key, value)
 
-        input_names = self.operationNode.get_input_variables()
+        input_names = input_dict.keys()
 
         numpy_func = BackendHelper.create_function_from_expression(expression, input_names,  {'np': np, 'scipy.special' : scipy.special})
         jitted_numpy_func = jit(nopython=True)(numpy_func)
