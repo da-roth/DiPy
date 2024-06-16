@@ -158,12 +158,77 @@ class ResultNodeAadc(ResultNode):
     
     
     def eval_and_grad_of_function(self, myfunc, input_dict, diff_dict):
+        return myfunc(input_dict)
+        # # Here we try to add aadc logic. myfunc is the func of the graph with inputs: input_dict and wanted derivatives diff_dict
+        # funcs = aadc.Functions()
         
-        # Here we try to add aadc logic. myfunc is the func of the graph with inputs: input_dict and wanted derivatives diff_dict
+        # #keys_array = list(input_dict.keys())
+        # values_array = list(input_dict.values())
+        
+        # valuesAadc = []
+        # for input_value in values_array:
+        #     value = aadc.idouble(input_value)
+        #     valuesAadc.append(value)
+        
+        # funcs.start_recording()
+        
+        # aadcArgs = []
+        # for valueAadc in valuesAadc:
+        #     aadcArgs.append(valueAadc.mark_as_input())
+
+        # index = 0
+        # aadc_input_dict = {}
+        # for key in input_dict:
+        #     aadc_input_dict[key] = valuesAadc[index]
+        #     index += 1
+        
+        # # Evaluate func with aadc idoubles
+        # result_optimized = myfunc(**aadc_input_dict)
+
+        # fRes = result_optimized.mark_as_output()
+        
+        # funcs.stop_recording()
+        
+        # # Create input dictionary for the aadc.evaluate
+        
+        # # Create input dictionary for the aadc.evaluate
+        # inputs = {}
+        # for aadc_arg, value_entry in zip(aadcArgs, values_array):
+        #     inputs[aadc_arg] = value_entry
+
+        # request = {fRes: [arg for arg in aadcArgs]}
+        
+        # Res = aadc.evaluate(funcs, request, inputs, aadc.ThreadPool(4))
+        
+        # aadc_eval_result = Res[0][fRes]
+        # # aadc_eval_diff = Res[1][fRes][aadcArgs[0]]
+        # # aadc_eval_diff2 = Res[1][fRes][aadcArgs[1]]
+        # # gradient = []
+        # # for arg in aadcArgs:
+        # #     gradient.append(Res[1][fRes][arg])
+        
+        # gradient_dict = {}
+        # for aadc_arg, input_key in zip(aadcArgs, input_dict):
+        #     gradient_dict[input_key] = Res[1][fRes][aadc_arg]#currently only one-dimensional output
+        
+        # return aadc_eval_result.tolist()[0], gradient_dict
+    
+    def create_optimized_executable(self, initial_input_dict, diff_dict): # For AADC input_dict and diff_dict are needed to create kernel through forward_pass
+        expression = str(self.operationNode)
+        function_mappings = self.get_function_mappings()
+        for key, value in function_mappings.items():
+            expression = expression.replace(key, value)
+        input_names = self.operationNode.get_input_variables()
+        numpy_func = BackendHelper.create_function_from_expression(expression, input_names,  {'aadc': aadc, 'np': np})
+
+        ###
+        ### Create AADC kernel for numpy_func that is evaluated in eval_and_grad_of_function(self, myfunc, input_dict, diff_dict)
+        ###
+                # Here we try to add aadc logic. myfunc is the func of the graph with inputs: input_dict and wanted derivatives diff_dict
         funcs = aadc.Functions()
         
         #keys_array = list(input_dict.keys())
-        values_array = list(input_dict.values())
+        values_array = list(initial_input_dict.values())
         
         valuesAadc = []
         for input_value in values_array:
@@ -178,49 +243,41 @@ class ResultNodeAadc(ResultNode):
 
         index = 0
         aadc_input_dict = {}
-        for key in input_dict:
+        for key in initial_input_dict:
             aadc_input_dict[key] = valuesAadc[index]
             index += 1
         
         # Evaluate func with aadc idoubles
-        result_optimized = myfunc(**aadc_input_dict)
+        result_optimized = numpy_func (**aadc_input_dict)
 
         fRes = result_optimized.mark_as_output()
         
         funcs.stop_recording()
         
-        # Create input dictionary for the aadc.evaluate
-        
-        # Create input dictionary for the aadc.evaluate
-        inputs = {}
-        for aadc_arg, value_entry in zip(aadcArgs, values_array):
-            inputs[aadc_arg] = value_entry
+        def aadc_kernel_func(input_dict):
+            values_array = list(input_dict.values())
+            # Create input dictionary for the aadc.evaluate
+            inputs = {}
+            for aadc_arg, value_entry in zip(aadcArgs, values_array):
+                inputs[aadc_arg] = value_entry
 
-        request = {fRes: [arg for arg in aadcArgs]}
+            request = {fRes: [arg for arg in aadcArgs]}
+            
+            Res = aadc.evaluate(funcs, request, inputs, aadc.ThreadPool(4))
+            
+            aadc_eval_result = Res[0][fRes]
+            # aadc_eval_diff = Res[1][fRes][aadcArgs[0]]
+            # aadc_eval_diff2 = Res[1][fRes][aadcArgs[1]]
+            # gradient = []
+            # for arg in aadcArgs:
+            #     gradient.append(Res[1][fRes][arg])
+            
+            gradient_dict = {}
+            for aadc_arg, input_key in zip(aadcArgs, input_dict):
+                gradient_dict[input_key] = Res[1][fRes][aadc_arg]#currently only one-dimensional output
+            
+            return aadc_eval_result.tolist()[0], gradient_dict
         
-        Res = aadc.evaluate(funcs, request, inputs, aadc.ThreadPool(4))
-        
-        aadc_eval_result = Res[0][fRes]
-        # aadc_eval_diff = Res[1][fRes][aadcArgs[0]]
-        # aadc_eval_diff2 = Res[1][fRes][aadcArgs[1]]
-        # gradient = []
-        # for arg in aadcArgs:
-        #     gradient.append(Res[1][fRes][arg])
-        
-        gradient_dict = {}
-        for aadc_arg, input_key in zip(aadcArgs, input_dict):
-            gradient_dict[input_key] = Res[1][fRes][aadc_arg]#currently only one-dimensional output
-        
-        return aadc_eval_result.tolist()[0], gradient_dict
     
-    def create_optimized_executable(self, input_dict, diff_dict): # For AADC input_dict and diff_dict are needed to create kernel through forward_pass
-        expression = str(self.operationNode)
-        function_mappings = self.get_function_mappings()
-        for key, value in function_mappings.items():
-            expression = expression.replace(key, value)
-        input_names = self.operationNode.get_input_variables()
-        numpy_func = BackendHelper.create_function_from_expression(expression, input_names,  {'aadc': aadc, 'np': np})
-        #jitted_numpy_func = jit(nopython=True)(numpy_func)
-        #jax.make_jaxpr(numpy_func)
-        return  numpy_func #jitted_numpy_func# numpy_func
+        return  aadc_kernel_func #numpy_func 
     
