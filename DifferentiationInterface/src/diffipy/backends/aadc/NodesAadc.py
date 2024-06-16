@@ -220,7 +220,7 @@ class ResultNodeAadc(ResultNode):
         
         def aadc_kernel_func(input_dict):
             #print(input_dict)
-            values_array = list(input_dict.values())
+            values_array = input_dict.values()#list(input_dict.values())
             #print(values_array)
             # Create input dictionary for the aadc.evaluate
             inputs = {}

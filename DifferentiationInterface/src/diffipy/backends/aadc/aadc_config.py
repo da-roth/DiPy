@@ -11,7 +11,7 @@ backend_classes = {
         "erfinv": ErfinvNodeAadc,
         "max": MaxNodeAadc,
         "sumVectorized": SumNodeVectorizedAadc,
-        "seed": lambda value: Aadc.manual_seed(value),
+        "seed": lambda value: np.random.seed(seed=value),
         "if": IfNodeAadc,
         "sin": SinNodeAadc,
         "cos": CosNodeAadc
