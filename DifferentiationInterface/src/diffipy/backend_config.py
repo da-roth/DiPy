@@ -11,6 +11,9 @@ from .backends.tensorflow.NodesTensorflow import *
 from .backends.jax import jax_config
 from .backends.jax.NodesJax import *
 
+from .backends.aadc import aadc_config
+from .backends.aadc.NodesAadc import *
+
 class BackendConfig:
     backend = 'numpy'
 
@@ -24,6 +27,8 @@ class BackendConfig:
             backend_module = tensorflow_config
         elif BackendConfig.backend == 'jax':
             backend_module = jax_config
+        elif BackendConfig.backend == 'aadc':
+            backend_module = aadc_config
         else:
             raise ValueError(f"Unsupported backend '{BackendConfig.backend}'")
 
