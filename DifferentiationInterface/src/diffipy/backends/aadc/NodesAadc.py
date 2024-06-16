@@ -244,7 +244,7 @@ class ResultNodeAadc(ResultNode):
             values_array = input_dict.values()
             inputs = {aadc_arg: value_entry for aadc_arg, value_entry in zip(aadcArgs, values_array)}
             
-            request = {fRes: list(aadcArgs)}  # Use list constructor directly
+            request = {fRes: aadcArgs}  
             
             Res = aadc.evaluate(funcs, request, inputs, aadc.ThreadPool(4))
             
