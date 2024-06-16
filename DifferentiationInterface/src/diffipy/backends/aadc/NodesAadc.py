@@ -218,32 +218,40 @@ class ResultNodeAadc(ResultNode):
         
         funcs.stop_recording()
         
-        def aadc_kernel_func(input_dict):
-            #print(input_dict)
-            values_array = input_dict.values()#list(input_dict.values())
-            #print(values_array)
-            # Create input dictionary for the aadc.evaluate
-            inputs = {}
-            for aadc_arg, value_entry in zip(aadcArgs, values_array):
-                inputs[aadc_arg] = value_entry
 
-            request = {fRes: [arg for arg in aadcArgs]}
+        # def aadc_kernel_func(input_dict):
+        #     #print(input_dict)
+        #     values_array = input_dict.values()#list(input_dict.values())
+        #     #print(values_array)
+        #     # Create input dictionary for the aadc.evaluate
+        #     inputs = {}
+        #     for aadc_arg, value_entry in zip(aadcArgs, values_array):
+        #         inputs[aadc_arg] = value_entry
+
+        #     request = {fRes: [arg for arg in aadcArgs]}
+            
+        #     Res = aadc.evaluate(funcs, request, inputs, aadc.ThreadPool(4))
+            
+        #     aadc_eval_result = Res[0][fRes]
+            
+        #     gradient_dict = {}
+        #     for aadc_arg, input_key in zip(aadcArgs, input_dict):
+        #         gradient_dict[input_key] = np.sum(Res[1][fRes][aadc_arg])#currently only one-dimensional output
+            
+            # return np.sum(aadc_eval_result), gradient_dict
+
+        def aadc_kernel_func(input_dict):
+            values_array = input_dict.values()
+            inputs = {aadc_arg: value_entry for aadc_arg, value_entry in zip(aadcArgs, values_array)}
+            
+            request = {fRes: list(aadcArgs)}  # Use list constructor directly
             
             Res = aadc.evaluate(funcs, request, inputs, aadc.ThreadPool(4))
             
             aadc_eval_result = Res[0][fRes]
-            #print(aadc_eval_result)
-            # aadc_eval_diff = Res[1][fRes][aadcArgs[0]]
-            # aadc_eval_diff2 = Res[1][fRes][aadcArgs[1]]
-            # gradient = []
-            # for arg in aadcArgs:
-            #     gradient.append(Res[1][fRes][arg])
-            
-            gradient_dict = {}
-            for aadc_arg, input_key in zip(aadcArgs, input_dict):
-                gradient_dict[input_key] = np.sum(Res[1][fRes][aadc_arg])#currently only one-dimensional output
-            
+            gradient_dict = {input_key: np.sum(Res[1][fRes][aadc_arg]) for aadc_arg, input_key in zip(aadcArgs, input_dict)}
             return np.sum(aadc_eval_result), gradient_dict
+        
         
         #print(initial_input_dict)
         test, test2 = aadc_kernel_func(initial_input_dict)
