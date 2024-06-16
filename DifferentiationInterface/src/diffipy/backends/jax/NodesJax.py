@@ -116,7 +116,10 @@ class DifferentiationNodeJAX(DifferentiationNode):
         input_dict = {var.identifier: var.value for var in input_variables}
 
         myfunc = self.operand.get_optimized_executable()
-        _, gradient = self.eval_and_grad_of_function(myfunc, input_dict, input_dict)
+        
+        result_class = ResultNodeJAX(self)
+        
+        _, gradient = result_class.eval_and_grad_of_function(myfunc, input_dict, input_dict)
 
         if isinstance(self.diffDirection, list):
             gradients = {}
@@ -144,16 +147,6 @@ class DifferentiationNodeJAX(DifferentiationNode):
            
             return gradient[gradient_key]
     
-    def eval_and_grad_of_function(sef, myfunc, input_dict, diff_dict):
-        result_optimized = myfunc(**input_dict)#s0=s0.value, K=K.value, r=r.value, sigma=sigma.value, dt = dt.value, z=pre_computed_random_variables)
-        def myfunc_with_dict(args_dict):
-            return myfunc(**args_dict)
-        gradient_func = jax.grad(myfunc_with_dict)
-        gradient_all_directions = gradient_func(input_dict)
-        gradient = {key: gradient_all_directions[key] for key in diff_dict.keys()}
-        return result_optimized, gradient
-
-
 ##
 ## Result node is used within performance testing. It contains the logic to create optimized executables and eval/grad of these.
 ##
@@ -163,7 +156,7 @@ class ResultNodeJAX(ResultNode):
     def eval(self):
         return self.operationNode.Run().item()
     
-    def eval_and_grad_of_function(sef, myfunc, input_dict, diff_dict):
+    def eval_and_grad_of_function(self, myfunc, input_dict, diff_dict):
         result_optimized = myfunc(**input_dict)#s0=s0.value, K=K.value, r=r.value, sigma=sigma.value, dt = dt.value, z=pre_computed_random_variables)
         def myfunc_with_dict(args_dict):
             return myfunc(**args_dict)

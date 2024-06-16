@@ -114,7 +114,12 @@ class DifferentiationNodeAadc(DifferentiationNode):
         input_dict = {var.identifier: var.value for var in input_variables}
 
         myfunc = self.operand.get_optimized_executable()
-        _, gradient = self.eval_and_grad_of_function(myfunc, input_dict, input_dict)
+        
+        result_class = ResultNodeAadc(self)
+        
+        _, gradient = result_class.eval_and_grad_of_function(myfunc, input_dict, input_dict)
+        
+        #_, gradient = self.eval_and_grad_of_function(myfunc, input_dict, input_dict)
 
         if isinstance(self.diffDirection, list):
             gradients = {}
@@ -141,64 +146,6 @@ class DifferentiationNodeAadc(DifferentiationNode):
                 raise ValueError(f"Gradient for '{gradient_key}' not found in the computed gradients.")
            
             return gradient[gradient_key]
-    
-    def eval_and_grad_of_function(sef, myfunc, input_dict, diff_dict):
-        
-        # Here we try to add aadc logic. myfunc is the func of the graph with inputs: input_dict and wanted derivatives diff_dict
-        funcs = aadc.Functions()
-        
-        #keys_array = list(input_dict.keys())
-        values_array = list(input_dict.values())
-        
-        valuesAadc = []
-        for input_value in values_array:
-            value = aadc.idouble(input_value)
-            valuesAadc.append(value)
-        
-        funcs.start_recording()
-        
-        aadcArgs = []
-        for valueAadc in valuesAadc:
-            aadcArgs.append(valueAadc.mark_as_input())
-
-        index = 0
-        aadc_input_dict = {}
-        for key in input_dict:
-            aadc_input_dict[key] = valuesAadc[index]
-            index += 1
-        
-        # Evaluate func with aadc idoubles
-        result_optimized = myfunc(**aadc_input_dict)
-
-        fRes = result_optimized.mark_as_output()
-        
-        funcs.stop_recording()
-        
-        # Create input dictionary for the aadc.evaluate
-        
-        # Create input dictionary for the aadc.evaluate
-        inputs = {}
-        for aadc_arg, value_entry in zip(aadcArgs, values_array):
-            inputs[aadc_arg] = value_entry
-
-        request = {fRes: [arg for arg in aadcArgs]}
-        
-        Res = aadc.evaluate(funcs, request, inputs, aadc.ThreadPool(4))
-        
-        aadc_eval_result = Res[0][fRes]
-        # aadc_eval_diff = Res[1][fRes][aadcArgs[0]]
-        # aadc_eval_diff2 = Res[1][fRes][aadcArgs[1]]
-        # gradient = []
-        # for arg in aadcArgs:
-        #     gradient.append(Res[1][fRes][arg])
-        
-        gradient_dict = {}
-        for aadc_arg, input_key in zip(aadcArgs, input_dict):
-            gradient_dict[input_key] = Res[1][fRes][aadc_arg]
-        
-        return aadc_eval_result.tolist()[0], gradient_dict #currently only one-dimensional output
-    
-    
 
 ##
 ## Result node is used within performance testing. It contains the logic to create optimized executables and eval/grad of these.
@@ -210,7 +157,7 @@ class ResultNodeAadc(ResultNode):
         return self.operationNode.Run()
     
     
-    def eval_and_grad_of_function(sef, myfunc, input_dict, diff_dict):
+    def eval_and_grad_of_function(self, myfunc, input_dict, diff_dict):
         
         # Here we try to add aadc logic. myfunc is the func of the graph with inputs: input_dict and wanted derivatives diff_dict
         funcs = aadc.Functions()
@@ -276,3 +223,4 @@ class ResultNodeAadc(ResultNode):
         #jitted_numpy_func = jit(nopython=True)(numpy_func)
         #jax.make_jaxpr(numpy_func)
         return  numpy_func #jitted_numpy_func# numpy_func
+    
