@@ -77,7 +77,7 @@ class RandomVariableNodeAadc(RandomVariableNode):
 
 class RandomVariableNodeAadcNormal(RandomVariableNode):
     def NewSample(self, sampleSize = 1):
-        self.value = np.random.normal(size = sampleSize)
+        self.value = aadc.idouble(np.random.normal(size = sampleSize))
 
 class SumNodeVectorizedAadc(Node):
     def __init__(self, operand):
