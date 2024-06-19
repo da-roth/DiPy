@@ -172,7 +172,7 @@ class ResultNodeTorch(ResultNode):
         return result, gradient
 
 
-    def create_optimized_executable(self):
+    def create_optimized_executable(self, input_dict, diff_dict = None): #If input_dict and diff_dict are None, default of the graph are used
             expression = str(self.operationNode)
 
             function_mappings = self.get_function_mappings()
@@ -180,8 +180,7 @@ class ResultNodeTorch(ResultNode):
             for key, value in function_mappings.items():
                 expression = expression.replace(key, value)
 
-            #expression = expression.replace('exp', 'torch.exp').replace('sqrt', 'torch.sqrt').replace('log', 'torch.log').replace('sin', 'torch.sin')
-            input_names = self.operationNode.get_input_variables()
+            input_names = input_dict.keys()
 
             torch_func = BackendHelper.create_function_from_expression(expression, input_names,  {'torch': torch})
 

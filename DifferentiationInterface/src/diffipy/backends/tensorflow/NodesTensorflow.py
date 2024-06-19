@@ -147,7 +147,7 @@ class ResultNodeTF(ResultNode):
         gradients = tape.gradient(result, [diff_dict[key] for key in diff_dict])
         return result, gradients
 
-    def create_optimized_executable(self):
+    def create_optimized_executable(self, input_dict, diff_dict = None): #If input_dict and diff_dict are None, default of the graph are used
             expression = str(self.operationNode)
             function_mappings = self.get_function_mappings()
             import re
@@ -160,6 +160,6 @@ class ResultNodeTF(ResultNode):
                 return f"tf.Variable({value}, dtype=tf.float32)"
             expression = re.sub(r'constant\(([^)]+)\)', replace_constant, expression)
             #expression = expression.replace('exp', 'tf.exp').replace('sqrt', 'tf.sqrt').replace('log', 'tf.log').replace('sin', 'tf.sin')
-            input_names = self.operationNode.get_input_variables()
+            input_names = input_dict.keys()
             tensorflow_func = BackendHelper.create_function_from_expression(expression, input_names,  {'tf': tf})
             return tensorflow_func#myfunc_wrapper(tensorflow_func) #returning it in such a way that it needs tensor inputs for now
