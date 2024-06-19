@@ -140,7 +140,7 @@ class ResultNodeNumpy(ResultNode):
         
         return result, gradients
     
-    def create_optimized_executable(self):
+    def create_optimized_executable(self, input_dict = None, diff_dict = None): #If input_dict and diff_dict are None, default of the graph are used
         expression = str(self.operationNode)
         
         function_mappings = self.get_function_mappings()
@@ -148,7 +148,7 @@ class ResultNodeNumpy(ResultNode):
         for key, value in function_mappings.items():
             expression = expression.replace(key, value)
 
-        input_names = self.operationNode.get_input_variables()
+        input_names = input_dict.keys()
 
         numpy_func = BackendHelper.create_function_from_expression(expression, input_names,  {'np': np, 'scipy.special' : scipy.special})
         jitted_numpy_func = jit(nopython=True)(numpy_func)

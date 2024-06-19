@@ -201,12 +201,12 @@ class Node:
         # Return a lambda function that calls executable_func
         return lambda *args: executable_func(*args)
     
-    def get_optimized_executable(self):
+    def get_optimized_executable(self, input_dict, diff_dict):
         # Create an executable by code generation and that is hence independent of the graph 
         from .backend_config import BackendConfig
         eval_class = BackendConfig.backend_result_classes[BackendConfig.backend]["result"]
         instance_eval_class = eval_class(self)
-        return instance_eval_class.create_optimized_executable()
+        return instance_eval_class.create_optimized_executable(input_dict, diff_dict)
 
 
 
