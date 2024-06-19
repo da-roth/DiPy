@@ -11,8 +11,22 @@ from .backends.tensorflow.NodesTensorflow import *
 from .backends.jax import jax_config
 from .backends.jax.NodesJax import *
 
-from .backends.aadc import aadc_config
-from .backends.aadc.NodesAadc import *
+# Try to import Aadc
+try:
+    import aadc
+    AADC_AVAILABLE = True
+except ModuleNotFoundError:
+    AADC_AVAILABLE = False
+
+# Example usage
+if AADC_AVAILABLE:
+    from .backends.aadc import aadc_config
+    from .backends.aadc.NodesAadc import *
+    #pass
+# else:
+#     print("aadc module is not available. Some features may be disabled.")
+
+
 
 class BackendConfig:
     backend = 'numpy'
